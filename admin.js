@@ -1,3 +1,4 @@
+//版权所有©ExcuseBox 禁止复制修改或商用 侵权必究
 const STORAGE_KEY = 'admin_login_data';
 
 window.addEventListener('DOMContentLoaded', function() {
