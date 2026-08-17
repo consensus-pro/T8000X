@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T8000X - 管理员后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+body{background:#fff;min-height:100vh;padding:20px;position:relative}
+.bg-grid{position:fixed;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,0,0,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03)1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+.container{max-width:900px;margin:0 auto;position:relative;z-index:1}
+.icon{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.icon-sm{width:14px;height:14px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.icon-md{width:20px;height:20px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.icon-lg{width:28px;height:28px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.icon-white{filter:brightness(0)invert(1)}
+.spinner{animation:spin 1.2s linear infinite;display:inline-block}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.header{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:16px 24px;border-radius:10px;margin-bottom:20px;border:1px solid #e5e5e5}
+.header h1{font-size:18px;font-weight:700;color:#0a0a0a;display:flex;align-items:center;gap:8px}
+.header .btn{padding:8px 18px;background:#f8f8f8;color:#333;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s;display:flex;align-items:center;gap:6px}
+.header .btn:hover{background:#e5e5e5}
+.header .btn .icon{filter:brightness(0)saturate(100%)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;padding:16px 20px;border-radius:10px;text-align:center;border:1px solid #e5e5e5}
+.stat-card .number{font-size:28px;font-weight:700;color:#0a0a0a}
+.stat-card .label{color:#888;font-size:13px;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px}
+.fold-section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;margin-bottom:20px;overflow:hidden}
+.fold-header{padding:14px 20px;background:#f8f8f8;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.fold-header span{font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
+
+/* ===== 折叠动画核心 ===== */
+.fold-body {
+    padding: 0 16px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+.fold-body.open {
+    max-height: 500px;      /* 足够容纳内容，如需更大可调整 */
+    padding: 8px 16px;
+    opacity: 1;
+    overflow-y: auto;       /* 内容过多时滚动 */
+}
+/* ===================== */
+
+.msg-item{padding:8px 0;border-bottom:1px solid #e5e5e5}
+.msg-item:last-child{border-bottom:none}
+.msg-item .msg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.msg-item .msg-top .msg-text{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px;flex:1;min-width:0}
+.msg-item .msg-top .msg-text .msg-user{font-weight:600;color:#1677ff;font-size:12px;flex-shrink:0}
+.msg-item .msg-top .msg-text .msg-user::after{content:': ';color:#1677ff}
+.msg-item .msg-top .msg-text .msg-content{color:#333;font-size:10px;word-break:break-word;flex:1;min-width:0}
+.msg-item .msg-top .msg-delete{padding:1px 10px;background:#d9534f;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:10px;flex-shrink:0;height:20px}
+.msg-item .msg-top .msg-delete:hover{background:#c9302c}
+.msg-item .msg-time{color:#bbb;font-size:6px;margin-top:1px;padding-left:0}
+.empty-state{text-align:center;padding:30px 0;color:#aaa;font-size:14px}
+.loading{text-align:center;padding:30px 0;color:#aaa;display:flex;align-items:center;justify-content:center;gap:6px}
+.user-item .btn-group{display:flex;gap:4px;align-items:center;flex-wrap:nowrap}
+.user-item .btn-sm{padding:4px 8px;border:none;border-radius:6px;cursor:pointer;font-size:11px;transition:background .2s;text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap;gap:3px;flex-shrink:0}
+.btn-detail{background:#0a0a0a;color:#fff}
+.btn-detail:hover{background:#222}
+.btn-delete{background:#d9534f;color:#fff}
+.btn-delete:hover{background:#c9302c}
+.btn-reset,.btn-points{background:#0a0a0a;color:#fff}
+.btn-reset:hover,.btn-points:hover{background:#222}
+.user-item{display:grid;grid-template-columns:1.2fr 1.8fr 1.2fr 2fr;padding:8px 10px;border-bottom:1px solid #f1f3f5;align-items:center;color:#333;font-size:13px;gap:6px}
+.user-item:last-child{border-bottom:none}
+.user-item .username{font-weight:600;color:#0a0a0a;font-size:13px}
+.user-item .email{color:#888;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-item .date{color:#888;font-size:11px;white-space:nowrap}
+.user-item .admin-badge{background:#0a0a0a;color:#fff;font-size:10px;padding:1px 8px;border-radius:10px;display:inline-block;margin-left:4px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:999;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;width:90%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
+.modal h3{font-size:18px;margin-bottom:16px;text-align:center}
+.modal .input-box{margin-bottom:16px}
+.modal .input-box input{width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none}
+.modal .input-box input:focus{border-color:#0a0a0a}
+.modal .btn-row-modal{display:flex;gap:10px}
+.modal .btn-row-modal .btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+.modal .btn-row-modal .btn-confirm{background:#0a0a0a;color:#fff}
+.modal .btn-row-modal .btn-confirm .icon{filter:brightness(0)invert(1)}
+.modal .btn-row-modal .btn-confirm:hover{background:#222}
+.modal .btn-row-modal .btn-cancel{background:#f0f0f0;color:#333}
+.modal .btn-row-modal .btn-cancel:hover{background:#e0e0e0}
+.announcement-form{display:flex;flex-direction:column;gap:12px;padding:8px 0}
+.announcement-form .switch-row{display:flex;align-items:center;gap:8px}
+.announcement-form .switch-row input[type="checkbox"]{width:40px;height:22px;appearance:none;background:#ccc;border-radius:11px;position:relative;outline:none;transition:.2s;cursor:pointer;flex-shrink:0}
+.announcement-form .switch-row input[type="checkbox"]:checked{background:#0a0a0a}
+.announcement-form .switch-row input[type="checkbox"]::after{content:'';position:absolute;top:50%;transform:translateY(-50%);left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s}
+.announcement-form .switch-row input[type="checkbox"]:checked::after{left:calc(100% - 20px)}
+.announcement-form input,.announcement-form textarea{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.announcement-form input:focus,.announcement-form textarea:focus{border-color:#0a0a0a}
+.announcement-form textarea{resize:vertical;min-height:80px}
+.announcement-form .btn-submit{padding:10px 20px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;align-self:flex-start}
+.announcement-form .btn-submit .icon{filter:brightness(0)invert(1)}
+.announcement-form .btn-submit:hover{background:#222}
+input[type="checkbox"]{accent-color:#000}
+.arrow-icon{transition:transform .3s ease}
+.arrow-icon.rotated{transform:rotate(90deg)}
+@media (max-width:640px){.stats{grid-template-columns:1fr 1fr}.user-item{grid-template-columns:1fr;gap:4px;padding:10px 12px}.user-item .btn-group{justify-content:flex-start;flex-wrap:wrap}.user-item .btn-sm{padding:4px 8px;font-size:11px}.msg-item .msg-top{flex-wrap:wrap}.msg-item .msg-top .msg-delete{margin-left:auto}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+<div class="header"><h1><img src="/svg/admin.svg" class="icon-lg"> 管理后台</h1><button class="btn" id="logoutBtn"><img src="/svg/exit.svg" class="icon"> 退出</button></div>
+<div class="stats"><div class="stat-card"><div class="number" id="totalUsers">0</div><div class="label"><img src="/svg/users.svg" class="icon"> 总用户数</div></div><div class="stat-card"><div class="number" id="todayUsers">0</div><div class="label"><img src="/svg/register.svg" class="icon"> 今日注册</div></div></div>
+<div class="fold-section"><div class="fold-header" id="msgToggle"><span><img src="/svg/chat.svg" class="icon"> 消息管理 <span id="msgCount">(0)</span></span><span id="msgArrow"><img src="/svg/switch.svg" class="icon arrow-icon"></span></div><div class="fold-body" id="msgBody"><div id="msgListContainer"><div class="loading"><img src="/svg/loading.svg" class="icon spinner"> 加载中...</div></div></div></div>
+<div class="fold-section"><div class="fold-header" id="userToggle"><span><img src="/svg/users.svg" class="icon"> 用户管理 <span id="userCount">(0)</span></span><span id="userArrow"><img src="/svg/switch.svg" class="icon arrow-icon"></span></div><div class="fold-body" id="userBody"><div id="userListContainer"><div class="loading"><img src="/svg/loading.svg" class="icon spinner"> 加载中...</div></div></div></div>
+<div class="fold-section"><div class="fold-header" id="announceToggle"><span><img src="/svg/net.svg" class="icon"> 公告</span><span id="announceArrow"><img src="/svg/switch.svg" class="icon arrow-icon"></span></div><div class="fold-body" id="announceBody"><div class="announcement-form"><div class="switch-row"><label>公告开关</label><input type="checkbox" id="announceSwitch"></div><input type="text" id="announceTitle" placeholder="公告标题"><textarea id="announceContent" placeholder="公告内容"></textarea><button class="btn-submit" id="announceSubmit">确定</button></div></div></div>
+</div>
+<div class="modal-overlay" id="resetPwdModal"><div class="modal"><h3>修改密码</h3><div class="input-box"><input type="password" id="newPwdInput" placeholder="输入新密码"></div><div class="btn-row-modal"><button class="btn btn-cancel" id="resetPwdCancel">取消</button><button class="btn btn-confirm" id="resetPwdConfirm"><img src="/svg/lock.svg" class="icon-sm"> 确认</button></div></div></div>
+<div class="modal-overlay" id="updatePointsModal"><div class="modal"><h3>修改积分</h3><div class="input-box"><input type="number" id="pointsInput" placeholder="请输入积分" step="1"></div><div class="btn-row-modal"><button class="btn btn-cancel" id="pointsCancel">取消</button><button class="btn btn-confirm" id="pointsConfirm"><img src="/svg/coins.svg" class="icon-sm"> 确认</button></div></div></div>
+
+<script src="/api/toast.js"></script>
+<script>
+!function(){const $=id=>document.getElementById(id),userListContainer=$('userListContainer'),totalUsersEl=$('totalUsers'),todayUsersEl=$('todayUsers'),userCount=$('userCount'),msgToggle=$('msgToggle'),msgBody=$('msgBody'),msgArrow=$('msgArrow'),msgListContainer=$('msgListContainer'),msgCount=$('msgCount'),userToggle=$('userToggle'),userBody=$('userBody'),userArrow=$('userArrow'),announceToggle=$('announceToggle'),announceBody=$('announceBody'),announceArrow=$('announceArrow'),announceSwitch=$('announceSwitch'),announceTitle=$('announceTitle'),announceContent=$('announceContent'),announceSubmit=$('announceSubmit'),resetPwdModal=$('resetPwdModal'),newPwdInput=$('newPwdInput'),resetPwdCancel=$('resetPwdCancel'),resetPwdConfirm=$('resetPwdConfirm'),updatePointsModal=$('updatePointsModal'),pointsInput=$('pointsInput'),pointsCancel=$('pointsCancel'),pointsConfirm=$('pointsConfirm');let currentResetUserId=null,currentPointsUserId=null,userLoaded=!1,messagesLoaded=!1,announceLoaded=!1,userOpen=!1,msgOpen=!1,announceOpen=!1;
+const apiCall=async(url,method,body)=>{const opts={method:method||'GET',headers:{'Content-Type':'application/json'},credentials:'include'};if(body)opts.body=JSON.stringify(body);const r=await fetch(url,opts);return await r.json()},isToday=d=>{const t=new Date(d),n=new Date;return t.getDate()===n.getDate()&&t.getMonth()===n.getMonth()&&t.getFullYear()===n.getFullYear()};
+const loadUserList=async()=>{if(userLoaded)return;userListContainer.innerHTML='<div class="loading"><img src="/svg/loading.svg" class="icon spinner"> 加载中...</div>';try{const r=await apiCall('/api/admin/users','GET');if(!r.success){if(r.error==='未登录'||r.error==='权限不足'){window.location.href='/admin';return}userListContainer.innerHTML=`<div class="empty-state">${r.error||'加载失败'}</div>`;return}const u=r.users||[],t=u.length,td=u.filter(u=>isToday(u.created_at)).length;totalUsersEl.textContent=t;todayUsersEl.textContent=td;userCount.textContent=`(${t})`;toast.success('统计信息加载成功');if(!u.length){userListContainer.innerHTML='<div class="empty-state">暂无用户</div>';userLoaded=!0;return}const f=document.createDocumentFragment();u.forEach(u=>{const d=document.createElement('div');d.className='user-item';const ia=u.is_admin||!1;d.innerHTML=`<span class="username">${u.username}${ia?' <span class="admin-badge">管理员</span>':''}</span><span class="email">${u.email}</span><span class="date">${u.created_at||'未知'}</span><span class="btn-group">${ia?'<span style="color:#888;font-size:13px;">-</span>':`<a href="/user?id=${encodeURIComponent(u.username)}" class="btn-sm btn-detail">详细</a><button class="btn-sm btn-reset" data-id="${u.id}" data-action="resetPwd">修改密码</button><button class="btn-sm btn-points" data-id="${u.id}" data-action="updatePoints">修改积分</button><button class="btn-sm btn-delete" data-id="${u.id}" data-action="deleteUser">删除</button>`}</span>`;f.appendChild(d)});userListContainer.innerHTML='';userListContainer.appendChild(f);userLoaded=!0}catch(e){userListContainer.innerHTML='<div class="empty-state">加载失败，请刷新</div>'}};
+const loadMessages=async()=>{if(messagesLoaded)return;msgListContainer.innerHTML='<div class="loading"><img src="/svg/loading.svg" class="icon spinner"> 加载中...</div>';try{const r=await apiCall('/api/admin/messages','GET');if(!r.success){msgListContainer.innerHTML=`<div class="empty-state">${r.error||'加载失败'}</div>`;return}const msgs=r.messages||[];msgCount.textContent=`(${msgs.length})`;if(!msgs.length){msgListContainer.innerHTML='<div class="empty-state">暂无消息</div>';return}const f=document.createDocumentFragment();msgs.forEach(m=>{const item=document.createElement('div');item.className='msg-item';item.dataset.id=m.id;const top=document.createElement('div');top.className='msg-top';const textDiv=document.createElement('div');textDiv.className='msg-text';const userSpan=document.createElement('span');userSpan.className='msg-user';userSpan.textContent=m.username;const contentSpan=document.createElement('span');contentSpan.className='msg-content';contentSpan.textContent=m.content||'';textDiv.appendChild(userSpan);textDiv.appendChild(contentSpan);const del=document.createElement('button');del.className='msg-delete';del.dataset.id=m.id;del.textContent='删除';del.type='button';top.appendChild(textDiv);top.appendChild(del);const time=document.createElement('div');time.className='msg-time';time.textContent=m.created_at||'';item.appendChild(top);item.appendChild(time);f.appendChild(item)});msgListContainer.innerHTML='';msgListContainer.appendChild(f);messagesLoaded=!0}catch(e){msgListContainer.innerHTML='<div class="empty-state">加载失败</div>'}};
+const loadAnnouncement=async()=>{if(announceLoaded)return;try{const r=await apiCall('/api/announcement','GET');if(r.success){announceSwitch.checked=r.is_active;announceTitle.value=r.title||'';announceContent.value=r.content||'';announceLoaded=!0}}catch(e){}};
+msgToggle.addEventListener('click',()=>{msgOpen=!msgOpen;msgBody.classList.toggle('open');const a=msgArrow.querySelector('img');if(a)a.classList.toggle('rotated');if(msgOpen)loadMessages()});
+userToggle.addEventListener('click',()=>{userOpen=!userOpen;userBody.classList.toggle('open');const a=userArrow.querySelector('img');if(a)a.classList.toggle('rotated');if(userOpen)loadUserList()});
+announceToggle.addEventListener('click',()=>{announceOpen=!announceOpen;announceBody.classList.toggle('open');const a=announceArrow.querySelector('img');if(a)a.classList.toggle('rotated');if(announceOpen&&!announceLoaded)loadAnnouncement()});
+msgListContainer.addEventListener('click',async e=>{const btn=e.target.closest('.msg-delete');if(!btn)return;const id=btn.dataset.id,item=btn.closest('.msg-item');try{const r=await apiCall(`/api/admin/messages/${id}`,'DELETE');if(r.success){toast.success('删除成功');if(item&&item.parentNode)item.remove();const rem=msgListContainer.querySelectorAll('.msg-item').length;msgCount.textContent=`(${rem})`;if(!rem)msgListContainer.innerHTML='<div class="empty-state">暂无消息</div>'}else toast.error(r.error||'删除失败')}catch(e){toast.error('网络错误')}});
+userListContainer.addEventListener('click',async e=>{const btn=e.target.closest('.btn-sm');if(!btn)return;const uid=btn.dataset.id,action=btn.dataset.action;if(action==='deleteUser'){if(!confirm('确定要删除这个用户吗？此操作不可恢复！'))return;const r=await apiCall(`/api/admin/users/${uid}`,'DELETE');if(r.success){toast.success('删除成功');userLoaded=!1;loadUserList();const u=await apiCall('/api/admin/users','GET');if(u.success){totalUsersEl.textContent=u.users.length;userCount.textContent=`(${u.users.length})`}}else toast.error(r.error||'删除失败')}else if(action==='resetPwd'){currentResetUserId=uid;newPwdInput.value='';resetPwdModal.classList.add('active')}else if(action==='updatePoints'){currentPointsUserId=uid;pointsInput.value='';updatePointsModal.classList.add('active')}});
+resetPwdCancel.addEventListener('click',()=>{resetPwdModal.classList.remove('active');currentResetUserId=null});
+resetPwdConfirm.addEventListener('click',async()=>{const p=newPwdInput.value.trim();if(p.length<6){toast.error('密码至少6位');return}const r=await apiCall(`/api/admin/users/${currentResetUserId}/reset-password`,'POST',{new_password:p});if(r.success){toast.success('密码已重置');resetPwdModal.classList.remove('active');currentResetUserId=null}else toast.error(r.error||'重置失败')});
+pointsCancel.addEventListener('click',()=>{updatePointsModal.classList.remove('active');currentPointsUserId=null});
+pointsConfirm.addEventListener('click',async()=>{const v=pointsInput.value.trim();if(v===''){toast.error('请输入积分');return}const p=parseInt(v,10);if(isNaN(p)){toast.error('请输入有效整数');return}const r=await apiCall(`/api/admin/users/${currentPointsUserId}/update-points`,'POST',{points:p});if(r.success){toast.success('积分已更新');updatePointsModal.classList.remove('active');currentPointsUserId=null;userLoaded=!1;loadUserList()}else toast.error(r.error||'更新失败')});
+resetPwdModal.addEventListener('click',e=>{if(e.target===resetPwdModal){resetPwdModal.classList.remove('active');currentResetUserId=null}});
+updatePointsModal.addEventListener('click',e=>{if(e.target===updatePointsModal){updatePointsModal.classList.remove('active');currentPointsUserId=null}});
+$('logoutBtn').addEventListener('click',async()=>{await apiCall('/api/logout','POST');window.location.href='/admin'});
+announceSubmit.addEventListener('click',async()=>{const t=announceTitle.value.trim(),c=announceContent.value.trim();if(!t||!c){toast.error('标题和内容不能为空');return}const r=await apiCall('/api/admin/announcement','POST',{title:t,content:c,is_active:announceSwitch.checked});if(r.success)toast.success('公告已修改');else toast.error(r.error||'修改失败')});
+toast.success('Hello Admin！');loadUserList();loadMessages();loadAnnouncement()}();
+</script>
+</body>
+</html>
