@@ -7,6 +7,9 @@ import os
 import base64
 import requests
 from werkzeug.utils import secure_filename
+import oss2
+import uuid
+from datetime import datetime
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -149,28 +152,33 @@ def upload_image():
     if size > 7.5 * 1024 * 1024:
         return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
 
-    IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
-    if not IMGBB_API_KEY:
-        return jsonify({"success": False, "error": "APIKEY未配置"}), 500
+    access_key_id = os.environ.get("ALIYUN_OSS_ID")
+    access_key_secret = os.environ.get("ALIYUN_OSS_SECRET")
+    bucket_name = "t6cc"
+    endpoint = "oss-cn-hongkong.aliyuncs.com"
+
+    if not access_key_id or not access_key_secret:
+        return jsonify({"success": False, "error": "OSS密钥未配置"}), 500
 
     try:
+        auth = oss2.Auth(access_key_id, access_key_secret)
+        bucket = oss2.Bucket(auth, endpoint, bucket_name)
+
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+        if ext not in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']:
+            ext = 'jpg'
+        filename = f"chat/{datetime.now().strftime('%Y/%m/%d')}/{uuid.uuid4().hex}.{ext}"
+
         file_bytes = file.read()
-        base64_data = base64.b64encode(file_bytes).decode('utf-8')
+        result = bucket.put_object(filename, file_bytes, headers={
+            'Content-Type': file.content_type or f'image/{ext}'
+        })
 
-        url = "https://api.imgbb.com/1/upload"
-        payload = {
-            "key": IMGBB_API_KEY,
-            "image": base64_data,
-            "name": secure_filename(file.filename)
-        }
-        resp = requests.post(url, data=payload, timeout=15)
-        result = resp.json()
+        if result.status != 200:
+            return jsonify({"success": False, "error": f"OSS上传失败: {result.status}"}), 500
 
-        if not result.get("success"):
-            error_msg = result.get("error", {}).get("message", "未知错误")
-            return jsonify({"success": False, "error": f"ImgBB 上传失败: {error_msg}"}), 500
+        image_url = f"https://{bucket_name}.{endpoint}/{filename}"
 
-        image_url = result["data"]["url"]
         img_markdown = f"![图片]({image_url})"
 
         conn = get_db_connection()
@@ -223,7 +231,7 @@ def upload_image():
 
         return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
 
-    except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "上传超时"}), 500
+    except oss2.exceptions.OssError as e:
+        return jsonify({"success": False, "error": f"OSS错误: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
