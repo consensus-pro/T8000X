@@ -56,6 +56,14 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .input-area button.send-btn:hover{background:#222}
 .input-area button.send-btn:disabled{opacity:.7;cursor:not-allowed}
 .input-area button.send-btn .icon-sm{filter:brightness(0)invert(1)}
+/* 新增切换按钮和功能面板样式 */
+.input-area .toggle-btn{transition:transform 0.3s ease}
+.input-area .toggle-btn.rotated{transform:rotate(90deg)}
+.function-panel{background:#fff;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;margin:0 16px 12px 16px;padding:0 12px;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:center}
+.function-panel.open{max-height:200px;opacity:1;padding:12px 12px;overflow-y:auto}
+.function-panel .func-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f9fa;border:1px solid #e5e5e5;border-radius:8px;padding:10px 0;cursor:pointer;transition:background .2s;font-size:12px;color:#333;gap:4px}
+.function-panel .func-btn:hover{background:#e5e5e5}
+.function-panel .func-btn .icon-md{width:24px;height:24px}
 .announcement-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;justify-content:center;align-items:center;padding:20px}
 .announcement-overlay.hidden{display:none}
 .announcement-modal{background:#fff;border-radius:16px;padding:24px 24px 16px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;position:relative}
@@ -93,7 +101,13 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <button class="input-btn" id="imageBtn"><img src="/svg/img.svg" class="icon-md"></button>
 <input type="file" id="imageInput" accept="image/*" class="hidden-input">
 <textarea id="messageInput" placeholder="输入消息..." maxlength="500" rows="1"></textarea>
+<button class="input-btn toggle-btn" id="togglePanelBtn"><img src="/svg/switch.svg" class="icon-md"></button>
 <button class="send-btn" id="sendBtn"><img src="/svg/send.svg" class="icon-sm"> 发送</button>
+</div>
+<div class="function-panel" id="functionPanel">
+<div class="func-btn" data-func="image"><img src="/svg/img.svg" class="icon-md"><span>图片</span></div>
+<div class="func-btn" data-func="transfer"><img src="/svg/transfer.svg" class="icon-md"><span>转账</span></div>
+<div class="func-btn" data-func="test"><img src="/svg/icon.svg" class="icon-md"><span>测试</span></div>
 </div>
 </div>
 <div class="announcement-overlay hidden" id="announceOverlay">
@@ -102,7 +116,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput'),tp=$('togglePanelBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -125,6 +139,10 @@ function checkAnnouncement(){fetch('/api/announcement').then(r=>r.json()).then(d
 acf.addEventListener('click',function(){toast.success('你已确认公告');if(ad.checked){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success&&d.updated_at)localStorage.setItem('announce_dismiss',d.updated_at)}).catch(()=>{})}ao.classList.add('hidden')});
 ib.addEventListener('click',function(){ii.click()});
 ii.addEventListener('change',async function(){let file=this.files[0];if(!file)return;if(file.size>200*1024){try{file=await compressImage(file,800,0.7)}catch(err){console.error(err);toast.error('图片压缩失败');this.value='';return}}if(file.size>7.5*1024*1024){toast.error('图片不能超过7.5MB');this.value='';return}ib.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner">';ib.disabled=true;const fd=new FormData();fd.append('image',file);try{const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});const data=await resp.json();if(data.success)toast.success('图片已发送');else toast.error(data.error||'上传失败')}catch(err){console.error(err);toast.error('网络错误，请重试')}finally{ib.innerHTML='<img src="/svg/img.svg" class="icon-md">';ib.disabled=false;this.value=''}});
+/* 新增切换面板逻辑 */
+tp.addEventListener('click',function(){const icon=this.querySelector('img');fp.classList.toggle('open');icon.classList.toggle('rotated')});
+/* 新增三个占位功能按钮 */
+fp.querySelectorAll('.func-btn').forEach(function(btn){btn.addEventListener('click',function(){const type=this.dataset.func;if(type==='image')toast.success('测试1');else if(type==='transfer')toast.success('测试2');else if(type==='test')toast.success('测试3')})});
 fetch('/api/user').then(r=>r.json()).then(d=>{if(d.success){un=d.username;hu.textContent=un;if(d.qq_number)myAvatar=`https://q1.qlogo.cn/g?b=qq&nk=${d.qq_number}&s=640`;else myAvatar=null;updateHeaderAvatar(myAvatar);loadHistory();initPusher();checkAnnouncement()}else window.location.href='/login'}).catch(()=>{window.location.href='/login'});
 sb.addEventListener('click',sendMessage);hpb.addEventListener('click',()=>{window.location.href='/profile'});st.addEventListener('click',()=>{window.location.href='/profile'});
 mc.addEventListener('scroll',function(){if(this.scrollTop===0&&hasMore&&!isLoading&&!firstLoad){currentOffset+=pageSize;loadMessages(currentOffset,true)}sessionStorage.setItem('chat_scroll_top',this.scrollTop.toString())});
