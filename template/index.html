@@ -97,8 +97,6 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 </div>
 <div class="messages" id="messagesContainer"><div class="loading-state" id="loadingIndicator"><img src="/svg/loading.svg" class="icon spinner"><span>加载中...</span></div></div>
 <div class="input-area">
-<button class="input-btn" id="imageBtn"><img src="/svg/img.svg" class="icon-md"></button>
-<input type="file" id="imageInput" accept="image/*" class="hidden-input">
 <textarea id="messageInput" placeholder="输入消息..." maxlength="500" rows="1"></textarea>
 <button class="input-btn toggle-btn" id="togglePanelBtn"><img src="/svg/switch.svg" class="icon-md"></button>
 <button class="send-btn" id="sendBtn"><img src="/svg/send.svg" class="icon-sm"> 发送</button>
@@ -116,7 +114,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput'),tp=$('togglePanelBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),tp=$('togglePanelBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -137,10 +135,53 @@ function initPusher(){if(pusher&&channelBound)return;fetch('/api/pusher/config')
 function sendMessage(){const text=mi.value.trim();if(!text)return;const isAi=un!=='纪失'&&text.startsWith('@纪失 ');let q='';if(isAi)q=text.substring(4).trim();sb.disabled=true;sb.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner"> 发送中...';mi.value='';autoResize();fetch('/api/send-message',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success){toast.error(d.error||'发送失败');sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';return}if(isAi&&q){const delay=Math.floor(Math.random()*5000)+3000;setTimeout(()=>{fetch('/api/ai-ask',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,question:q})}).then(r=>r.json()).then(ad=>{if(!ad.success)toast.error('请求失败：'+(ad.error||'未知错误'))}).catch(()=>{toast.error('网络错误')})},delay)}}).catch(()=>{toast.error('发送失败')}).finally(()=>{sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';mi.blur()})}
 function checkAnnouncement(){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success){const stored=localStorage.getItem('announce_dismiss');const isDismissed=(stored===d.updated_at);if(d.is_active&&!isDismissed){toast.success('公告加载成功');at.textContent=d.title||'公告';ac.textContent=d.content||'';ad.checked=false;ao.classList.remove('hidden')}}}).catch(()=>{})}
 acf.addEventListener('click',function(){toast.success('你已确认公告');if(ad.checked){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success&&d.updated_at)localStorage.setItem('announce_dismiss',d.updated_at)}).catch(()=>{})}ao.classList.add('hidden')});
-ib.addEventListener('click',function(){ii.click()});
-ii.addEventListener('change',async function(){let file=this.files[0];if(!file)return;if(file.size>200*1024){try{file=await compressImage(file,800,0.7)}catch(err){console.error(err);toast.error('图片压缩失败');this.value='';return}}if(file.size>7.5*1024*1024){toast.error('图片不能超过7.5MB');this.value='';return}ib.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner">';ib.disabled=true;const fd=new FormData();fd.append('image',file);try{const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});const data=await resp.json();if(data.success)toast.success('图片已发送');else toast.error(data.error||'上传失败')}catch(err){console.error(err);toast.error('网络错误，请重试')}finally{ib.innerHTML='<img src="/svg/img.svg" class="icon-md">';ib.disabled=false;this.value=''}});
 tp.addEventListener('click',function(){fp.classList.toggle('open');tp.classList.toggle('rotated')});
-fp.querySelectorAll('.func-btn').forEach(function(btn){btn.addEventListener('click',function(){const type=this.dataset.func;if(type==='image')toast.success('测试1');else if(type==='transfer')toast.success('测试2');else if(type==='test')toast.success('测试3');else if(type==='user')toast.success('测试4')})});
+// 功能面板按钮事件
+fp.querySelectorAll('.func-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+        const type=this.dataset.func;
+        if(type==='image'){
+            // 图片上传逻辑
+            const input=document.createElement('input');
+            input.type='file';
+            input.accept='image/*';
+            input.style.display='none';
+            document.body.appendChild(input);
+            input.addEventListener('change',async function(){
+                let file=this.files[0];
+                if(!file){this.remove();return}
+                if(file.size>200*1024){
+                    try{file=await compressImage(file,800,0.7)}catch(err){console.error(err);toast.error('图片压缩失败');this.remove();return}
+                }
+                if(file.size>7.5*1024*1024){toast.error('图片不能超过7.5MB');this.remove();return}
+                const btnEl=this.closest('.func-btn');
+                if(btnEl){
+                    const origHtml=btnEl.innerHTML;
+                    btnEl.innerHTML='<img src="/svg/loading.svg" class="icon-md spinner"><span>上传中</span>';
+                    btnEl.style.pointerEvents='none';
+                    const fd=new FormData();
+                    fd.append('image',file);
+                    try{
+                        const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});
+                        const data=await resp.json();
+                        if(data.success)toast.success('图片已发送');
+                        else toast.error(data.error||'上传失败');
+                    }catch(err){console.error(err);toast.error('网络错误，请重试')}
+                    btnEl.innerHTML=origHtml;
+                    btnEl.style.pointerEvents='';
+                }
+                this.remove();
+            });
+            input.click();
+        }else if(type==='transfer'){
+            toast.success('测试2');
+        }else if(type==='test'){
+            toast.success('测试3');
+        }else if(type==='user'){
+            toast.success('测试4');
+        }
+    });
+});
 fetch('/api/user').then(r=>r.json()).then(d=>{if(d.success){un=d.username;hu.textContent=un;if(d.qq_number)myAvatar=`https://q1.qlogo.cn/g?b=qq&nk=${d.qq_number}&s=640`;else myAvatar=null;updateHeaderAvatar(myAvatar);loadHistory();initPusher();checkAnnouncement()}else window.location.href='/login'}).catch(()=>{window.location.href='/login'});
 sb.addEventListener('click',sendMessage);hpb.addEventListener('click',()=>{window.location.href='/profile'});st.addEventListener('click',()=>{window.location.href='/profile'});
 mc.addEventListener('scroll',function(){if(this.scrollTop===0&&hasMore&&!isLoading&&!firstLoad){currentOffset+=pageSize;loadMessages(currentOffset,true)}sessionStorage.setItem('chat_scroll_top',this.scrollTop.toString())});
