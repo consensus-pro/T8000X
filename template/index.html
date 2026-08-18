@@ -141,7 +141,9 @@ fp.querySelectorAll('.func-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
         const type=this.dataset.func;
         if(type==='image'){
-            // 图片上传逻辑
+            // 保存当前按钮引用
+            const btnEl=this;
+            // 创建隐藏的文件输入
             const input=document.createElement('input');
             input.type='file';
             input.accept='image/*';
@@ -150,26 +152,25 @@ fp.querySelectorAll('.func-btn').forEach(function(btn){
             input.addEventListener('change',async function(){
                 let file=this.files[0];
                 if(!file){this.remove();return}
+                // 压缩图片
                 if(file.size>200*1024){
                     try{file=await compressImage(file,800,0.7)}catch(err){console.error(err);toast.error('图片压缩失败');this.remove();return}
                 }
                 if(file.size>7.5*1024*1024){toast.error('图片不能超过7.5MB');this.remove();return}
-                const btnEl=this.closest('.func-btn');
-                if(btnEl){
-                    const origHtml=btnEl.innerHTML;
-                    btnEl.innerHTML='<img src="/svg/loading.svg" class="icon-md spinner"><span>上传中</span>';
-                    btnEl.style.pointerEvents='none';
-                    const fd=new FormData();
-                    fd.append('image',file);
-                    try{
-                        const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});
-                        const data=await resp.json();
-                        if(data.success)toast.success('图片已发送');
-                        else toast.error(data.error||'上传失败');
-                    }catch(err){console.error(err);toast.error('网络错误，请重试')}
-                    btnEl.innerHTML=origHtml;
-                    btnEl.style.pointerEvents='';
-                }
+                // 保存原始内容
+                const origHtml=btnEl.innerHTML;
+                btnEl.innerHTML='<img src="/svg/loading.svg" class="icon-md spinner"><span>上传中</span>';
+                btnEl.style.pointerEvents='none';
+                const fd=new FormData();
+                fd.append('image',file);
+                try{
+                    const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});
+                    const data=await resp.json();
+                    if(data.success)toast.success('图片已发送');
+                    else toast.error(data.error||'上传失败');
+                }catch(err){console.error(err);toast.error('网络错误，请重试')}
+                btnEl.innerHTML=origHtml;
+                btnEl.style.pointerEvents='';
                 this.remove();
             });
             input.click();
