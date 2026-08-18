@@ -63,6 +63,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .function-panel .func-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f9fa;border:1px solid #e5e5e5;border-radius:8px;padding:10px 0;cursor:pointer;transition:background .2s;font-size:12px;color:#333;gap:4px}
 .function-panel .func-btn:hover{background:#e5e5e5}
 .function-panel .func-btn .icon-md{width:24px;height:24px}
+.function-panel .func-btn .icon-sm{width:18px;height:18px}
 .announcement-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;justify-content:center;align-items:center;padding:20px}
 .announcement-overlay.hidden{display:none}
 .announcement-modal{background:#fff;border-radius:16px;padding:24px 24px 16px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;position:relative}
@@ -114,7 +115,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),tp=$('togglePanelBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ii=$('imageInput'),tp=$('togglePanelBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -135,54 +136,83 @@ function initPusher(){if(pusher&&channelBound)return;fetch('/api/pusher/config')
 function sendMessage(){const text=mi.value.trim();if(!text)return;const isAi=un!=='纪失'&&text.startsWith('@纪失 ');let q='';if(isAi)q=text.substring(4).trim();sb.disabled=true;sb.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner"> 发送中...';mi.value='';autoResize();fetch('/api/send-message',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success){toast.error(d.error||'发送失败');sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';return}if(isAi&&q){const delay=Math.floor(Math.random()*5000)+3000;setTimeout(()=>{fetch('/api/ai-ask',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,question:q})}).then(r=>r.json()).then(ad=>{if(!ad.success)toast.error('请求失败：'+(ad.error||'未知错误'))}).catch(()=>{toast.error('网络错误')})},delay)}}).catch(()=>{toast.error('发送失败')}).finally(()=>{sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';mi.blur()})}
 function checkAnnouncement(){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success){const stored=localStorage.getItem('announce_dismiss');const isDismissed=(stored===d.updated_at);if(d.is_active&&!isDismissed){toast.success('公告加载成功');at.textContent=d.title||'公告';ac.textContent=d.content||'';ad.checked=false;ao.classList.remove('hidden')}}}).catch(()=>{})}
 acf.addEventListener('click',function(){toast.success('你已确认公告');if(ad.checked){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success&&d.updated_at)localStorage.setItem('announce_dismiss',d.updated_at)}).catch(()=>{})}ao.classList.add('hidden')});
-tp.addEventListener('click',function(){fp.classList.toggle('open');tp.classList.toggle('rotated')});
-// 功能面板按钮事件
-fp.querySelectorAll('.func-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-        const type=this.dataset.func;
-        if(type==='image'){
-            // 保存当前按钮引用
-            const btnEl=this;
-            // 创建隐藏的文件输入
-            const input=document.createElement('input');
-            input.type='file';
-            input.accept='image/*';
-            input.style.display='none';
-            document.body.appendChild(input);
-            input.addEventListener('change',async function(){
-                let file=this.files[0];
-                if(!file){this.remove();return}
-                // 压缩图片
-                if(file.size>200*1024){
-                    try{file=await compressImage(file,800,0.7)}catch(err){console.error(err);toast.error('图片压缩失败');this.remove();return}
-                }
-                if(file.size>7.5*1024*1024){toast.error('图片不能超过7.5MB');this.remove();return}
-                // 保存原始内容
-                const origHtml=btnEl.innerHTML;
-                btnEl.innerHTML='<img src="/svg/loading.svg" class="icon-md spinner"><span>上传中</span>';
-                btnEl.style.pointerEvents='none';
-                const fd=new FormData();
-                fd.append('image',file);
-                try{
-                    const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});
-                    const data=await resp.json();
-                    if(data.success)toast.success('图片已发送');
-                    else toast.error(data.error||'上传失败');
-                }catch(err){console.error(err);toast.error('网络错误，请重试')}
-                btnEl.innerHTML=origHtml;
-                btnEl.style.pointerEvents='';
-                this.remove();
-            });
-            input.click();
-        }else if(type==='transfer'){
-            toast.success('测试2');
-        }else if(type==='test'){
-            toast.success('测试3');
-        }else if(type==='user'){
-            toast.success('测试4');
-        }
+// 隐藏的图片input
+const imageInput = document.createElement('input');
+imageInput.type = 'file';
+imageInput.accept = 'image/*';
+imageInput.className = 'hidden-input';
+imageInput.id = 'imageInput';
+document.body.appendChild(imageInput);
+const ii2 = document.getElementById('imageInput');
+
+ii2.addEventListener('change', async function(){
+  let file = this.files[0];
+  if(!file) return;
+  const imageFuncBtn = fp.querySelector('.func-btn[data-func="image"]');
+  // 显示loading
+  imageFuncBtn.innerHTML = '<img src="/svg/loading.svg" class="icon-sm spinner"><span>上传中...</span>';
+  imageFuncBtn.style.pointerEvents = 'none';
+  try {
+    if(file.size > 200 * 1024){
+      try {
+        file = await compressImage(file, 800, 0.7);
+      } catch(err) {
+        console.error(err);
+        toast.error('图片压缩失败');
+        this.value = '';
+        return;
+      }
+    }
+    if(file.size > 7.5 * 1024 * 1024){
+      toast.error('图片不能超过7.5MB');
+      this.value = '';
+      return;
+    }
+    const fd = new FormData();
+    fd.append('image', file);
+    const resp = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: fd,
+      credentials: 'include'
     });
+    const data = await resp.json();
+    if(data.success) {
+      toast.success('图片已发送');
+    } else {
+      toast.error(data.error || '上传失败');
+    }
+  } catch(err) {
+    console.error(err);
+    toast.error('网络错误，请重试');
+  } finally {
+    // 恢复按钮
+    imageFuncBtn.innerHTML = '<img src="/svg/img.svg" class="icon-md"><span>图片</span>';
+    imageFuncBtn.style.pointerEvents = '';
+    this.value = '';
+  }
 });
+
+tp.addEventListener('click', function(){
+  fp.classList.toggle('open');
+  tp.classList.toggle('rotated');
+});
+
+fp.querySelectorAll('.func-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    const type = this.dataset.func;
+    if(type === 'image') {
+      // 触发文件选择
+      ii2.click();
+    } else if(type === 'transfer') {
+      toast.success('测试2');
+    } else if(type === 'test') {
+      toast.success('测试3');
+    } else if(type === 'user') {
+      toast.success('测试4');
+    }
+  });
+});
+
 fetch('/api/user').then(r=>r.json()).then(d=>{if(d.success){un=d.username;hu.textContent=un;if(d.qq_number)myAvatar=`https://q1.qlogo.cn/g?b=qq&nk=${d.qq_number}&s=640`;else myAvatar=null;updateHeaderAvatar(myAvatar);loadHistory();initPusher();checkAnnouncement()}else window.location.href='/login'}).catch(()=>{window.location.href='/login'});
 sb.addEventListener('click',sendMessage);hpb.addEventListener('click',()=>{window.location.href='/profile'});st.addEventListener('click',()=>{window.location.href='/profile'});
 mc.addEventListener('scroll',function(){if(this.scrollTop===0&&hasMore&&!isLoading&&!firstLoad){currentOffset+=pageSize;loadMessages(currentOffset,true)}sessionStorage.setItem('chat_scroll_top',this.scrollTop.toString())});
