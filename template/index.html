@@ -56,12 +56,12 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .input-area button.send-btn:hover{background:#222}
 .input-area button.send-btn:disabled{opacity:.7;cursor:not-allowed}
 .input-area button.send-btn .icon-sm{filter:brightness(0)invert(1)}
-.plus-btn{transition:transform 0.3s ease;background:#f0f0f0;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;width:44px;padding:0;align-self:flex-end;transition:transform 0.3s ease, background 0.2s}
+.plus-btn{background:#f0f0f0;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;width:44px;padding:0;align-self:flex-end;transition:background 0.2s}
 .plus-btn:hover{background:#e5e5e5}
-.plus-btn.rotated{transform:rotate(45deg)}
-.plus-btn svg{width:24px;height:24px;fill:none;stroke:#333;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.function-panel{background:#fff;border-top:1px solid #e5e5e5;padding:8px 16px 12px;display:none;flex-shrink:0;gap:8px;justify-content:space-around;flex-wrap:wrap}
-.function-panel.open{display:flex}
+.plus-btn svg{width:24px;height:24px;fill:none;stroke:#333;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.3s ease}
+.plus-btn .plus-icon.rotated{transform:rotate(45deg)}
+.function-panel{background:#fff;border-top:1px solid #e5e5e5;padding:0 16px;max-height:0;overflow:hidden;opacity:0;flex-shrink:0;transition:max-height 0.35s ease, padding 0.35s ease, opacity 0.35s ease;display:flex;gap:8px;justify-content:space-around;flex-wrap:wrap}
+.function-panel.open{max-height:120px;padding:12px 16px;opacity:1}
 .func-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background 0.2s;min-width:60px;flex:1;max-width:80px}
 .func-item:hover{background:#f0f0f0}
 .func-item .func-icon{width:24px;height:24px;filter:brightness(0)saturate(100%)}
@@ -104,7 +104,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <input type="file" id="imageInput" accept="image/*" class="hidden-input">
 <textarea id="messageInput" placeholder="输入消息..." maxlength="500" rows="1"></textarea>
 <button class="plus-btn" id="plusBtn">
-<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+<svg class="plus-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 <button class="send-btn" id="sendBtn"><img src="/svg/send.svg" class="icon-sm"> 发送</button>
 </div>
@@ -121,7 +121,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput'),pb=$('plusBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput'),pb=$('plusBtn'),fp=$('functionPanel'),pi=pb.querySelector('.plus-icon');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -147,7 +147,7 @@ ii.addEventListener('change',async function(){let file=this.files[0];if(!file)re
 fetch('/api/user').then(r=>r.json()).then(d=>{if(d.success){un=d.username;hu.textContent=un;if(d.qq_number)myAvatar=`https://q1.qlogo.cn/g?b=qq&nk=${d.qq_number}&s=640`;else myAvatar=null;updateHeaderAvatar(myAvatar);loadHistory();initPusher();checkAnnouncement()}else window.location.href='/login'}).catch(()=>{window.location.href='/login'});
 sb.addEventListener('click',sendMessage);hpb.addEventListener('click',()=>{window.location.href='/profile'});st.addEventListener('click',()=>{window.location.href='/profile'});
 mc.addEventListener('scroll',function(){if(this.scrollTop===0&&hasMore&&!isLoading&&!firstLoad){currentOffset+=pageSize;loadMessages(currentOffset,true)}sessionStorage.setItem('chat_scroll_top',this.scrollTop.toString())});
-pb.addEventListener('click',function(){this.classList.toggle('rotated');fp.classList.toggle('open')});
+pb.addEventListener('click',function(){pi.classList.toggle('rotated');fp.classList.toggle('open')});
 fp.querySelectorAll('.func-item').forEach(function(item){item.addEventListener('click',function(){const num=this.dataset.func;toast.success('测试'+num)})});
 }();
 </script>
