@@ -11,6 +11,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .icon{display:inline-block;vertical-align:middle;flex-shrink:0;width:16px;height:16px;filter:brightness(0)saturate(100%)}
 .icon-sm{width:14px;height:14px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
 .icon-md{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.icon-lg{width:28px;height:28px;display:block;margin:0 auto 4px;filter:brightness(0)saturate(100%)}
 .icon-gray{filter:brightness(0)saturate(0%)opacity(0.6)}
 .spinner{animation:spin 1.5s linear infinite;display:inline-block}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
@@ -45,14 +46,25 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .message .time{font-size:10px;color:#aaa;margin-top:2px;padding:0 4px}
 .empty-state{text-align:center;color:#aaa;padding:40px 0;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:12px}
 .empty-state .icon{width:32px;height:32px;opacity:.3;filter:brightness(0)saturate(100%)}
-.input-area{padding:12px 16px;border-top:1px solid #e5e5e5;display:flex;gap:8px;background:#fff;flex-shrink:0;align-items:flex-end}
-.input-area textarea{flex:1;padding:10px 14px;border:1px solid #e5e5e5;border-radius:10px;font-size:14px;outline:none;resize:none;max-height:120px;min-height:44px;line-height:1.5;font-family:inherit;background:#f8f9fa;transition:border-color .2s}
+.function-panel{max-height:0;overflow:hidden;opacity:0;transition:max-height 0.3s ease,opacity 0.3s ease,padding 0.3s ease;background:#fff;border-top:1px solid #f0f0f0;padding:0 16px}
+.function-panel.open{max-height:130px;opacity:1;padding:12px 16px}
+.function-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;height:100%;align-content:center}
+.function-item{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;border-radius:10px;cursor:pointer;transition:background 0.15s;user-select:none;gap:2px}
+.function-item:active{background:#f0f0f0}
+.function-item .icon-lg{width:32px;height:32px;display:block;margin:0 auto 2px;filter:brightness(0)saturate(100%)}
+.function-item span{font-size:11px;color:#333;font-weight:500;text-align:center}
+.input-area{padding:10px 12px;border-top:1px solid #e5e5e5;display:flex;gap:6px;background:#fff;flex-shrink:0;align-items:flex-end}
+.input-area textarea{flex:1;padding:10px 14px;border:1px solid #e5e5e5;border-radius:10px;font-size:14px;outline:none;resize:none;max-height:120px;min-height:40px;line-height:1.5;font-family:inherit;background:#f8f9fa;transition:border-color .2s}
 .input-area textarea:focus{border-color:#0a0a0a;background:#fff}
-.input-area .input-btn{height:44px;padding:0 14px;background:#f0f0f0;color:#333;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;font-size:16px;transition:all .2s;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end}
+.input-area .input-btn{height:40px;width:40px;padding:0;background:#f0f0f0;color:#333;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;font-size:16px;transition:all .2s;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end}
 .input-area .input-btn:hover{background:#e5e5e5}
 .input-area .input-btn:disabled{opacity:.6;cursor:not-allowed}
 .input-area .input-btn .icon-md{filter:brightness(0)saturate(100%)}
-.input-area button.send-btn{padding:10px 20px;background:#0a0a0a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:background .2s;display:flex;align-items:center;gap:6px;flex-shrink:0;height:44px;align-self:flex-end;white-space:nowrap}
+.input-area .plus-btn{height:40px;width:40px;padding:0;background:#f0f0f0;color:#333;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;font-size:16px;transition:all .2s;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end}
+.input-area .plus-btn:hover{background:#e5e5e5}
+.input-area .plus-btn .icon-md{filter:brightness(0)saturate(100%);transition:transform 0.3s ease;display:block}
+.input-area .plus-btn.rotated .icon-md{transform:rotate(45deg)}
+.input-area button.send-btn{padding:0 18px;background:#0a0a0a;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:background .2s;display:flex;align-items:center;gap:6px;flex-shrink:0;height:40px;align-self:flex-end;white-space:nowrap}
 .input-area button.send-btn:hover{background:#222}
 .input-area button.send-btn:disabled{opacity:.7;cursor:not-allowed}
 .input-area button.send-btn .icon-sm{filter:brightness(0)invert(1)}
@@ -89,10 +101,12 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <div class="right"><button class="btn-icon" id="settingsBtn"><img src="/svg/gear.svg" class="icon-sm"><span class="label">设置</span></button></div>
 </div>
 <div class="messages" id="messagesContainer"><div class="loading-state" id="loadingIndicator"><img src="/svg/loading.svg" class="icon spinner"><span>加载中...</span></div></div>
+<div class="function-panel" id="functionPanel"><div class="function-grid"><div class="function-item" data-test="1"><img src="/svg/time.svg" class="icon-lg"><span>测试1</span></div><div class="function-item" data-test="2"><img src="/svg/time.svg" class="icon-lg"><span>测试2</span></div><div class="function-item" data-test="3"><img src="/svg/time.svg" class="icon-lg"><span>测试3</span></div><div class="function-item" data-test="4"><img src="/svg/time.svg" class="icon-lg"><span>测试4</span></div></div></div>
 <div class="input-area">
 <button class="input-btn" id="imageBtn"><img src="/svg/img.svg" class="icon-md"></button>
 <input type="file" id="imageInput" accept="image/*" class="hidden-input">
 <textarea id="messageInput" placeholder="输入消息..." maxlength="500" rows="1"></textarea>
+<button class="plus-btn" id="plusBtn"><img src="/svg/plus.svg" class="icon-md"></button>
 <button class="send-btn" id="sendBtn"><img src="/svg/send.svg" class="icon-sm"> 发送</button>
 </div>
 </div>
@@ -102,7 +116,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ib=$('imageBtn'),ii=$('imageInput'),pb=$('plusBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0,panelOpen=!1;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -110,6 +124,11 @@ function compressImage(file,maxWidth=800,quality=0.7){return new Promise((resolv
 function renderContent(t){if(!t)return'';const m=t.match(/!\[.*?\]\((.*?)\)/);if(m){const u=escapeHtml(m[1]);return`<img src="${u}" loading="lazy" style="max-width:100%;max-height:250px;border-radius:8px;margin:4px 0;" onerror="this.style.display='none'">`}return escapeHtml(t).replace(/\n/g,'<br>')}
 function updateHeaderAvatar(url){if(url){hac.innerHTML=`<img class="header-avatar" src="${url}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;background:#e5e7eb;border:none;display:block;">`}else{hac.innerHTML=`<div class="avatar-placeholder"><img src="/svg/avatar.svg"></div>`}}
 function getAvatarHtml(sender,avatarUrl,isSelf){const link=isSelf?'/profile':`/user?id=${encodeURIComponent(sender)}`;let inner=avatarUrl?`<img src="${avatarUrl}" draggable="false" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:cover;">`:`<img src="/svg/avatar.svg" draggable="false" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:cover;filter:brightness(0)saturate(0%)opacity(0.6)">`;return`<div class="msg-avatar-wrapper" data-sender="${sender}" data-link="${link}" oncontextmenu="return false;">${inner}</div>`}
+function togglePanel(){panelOpen=!panelOpen;fp.classList.toggle('open',panelOpen);pb.classList.toggle('rotated',panelOpen)}
+function closePanel(){if(panelOpen){panelOpen=!1;fp.classList.remove('open');pb.classList.remove('rotated')}}
+pb.addEventListener('click',function(e){e.stopPropagation();togglePanel()});
+fp.addEventListener('click',function(e){const item=e.target.closest('.function-item');if(!item)return;const test=item.dataset.test;if(test)window.toast.success('测试'+test)});
+document.addEventListener('click',function(e){if(panelOpen&&!fp.contains(e.target)&&!pb.contains(e.target)){closePanel()}});
 function addMessage(sender,text,time,avatarUrl,isSelf,prepend){const ld=document.getElementById('loadingIndicator');if(ld)ld.remove();const emp=mc.querySelector('.empty-state');if(emp)emp.remove();const div=document.createElement('div');const self=isSelf!==undefined?isSelf:(sender===un);div.className='message '+(self?'self':'other');const ah=getAvatarHtml(sender,avatarUrl,self);div.innerHTML=`${ah}<div class="msg-content"><div class="sender"></div><div class="bubble"></div><div class="time"></div></div>`;const se=div.querySelector('.sender'),bu=div.querySelector('.bubble'),ti=div.querySelector('.time');const decoded=decodeHtml(text);se.textContent=sender;bu.innerHTML=renderContent(decoded);const trimmed=decoded.trim();if(/^!\[.*?\]\(.*?\)$/.test(trimmed))bu.classList.add('image-only');ti.textContent=time||'刚刚';if(prepend){mc.insertBefore(div,mc.firstChild)}else{mc.appendChild(div)}const wr=div.querySelector('.msg-avatar-wrapper');if(wr){wr.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();return false});wr.addEventListener('pointerdown',function(e){this._longPressTriggered=false;const target=this.dataset.sender||sender;longPress=setTimeout(()=>{if(target&&target!==un){const cur=mi.value,mention='@'+target+' ',pos=mi.selectionStart||0;mi.value=cur.slice(0,pos)+mention+cur.slice(pos);const newPos=pos+mention.length;mi.selectionStart=newPos;mi.selectionEnd=newPos;mi.focus();autoResize();toast.success('已@用户: '+target)}this._longPressTriggered=true;longPress=null},500)});wr.addEventListener('pointerup',function(e){if(longPress){clearTimeout(longPress);longPress=null;const link=this.dataset.link;if(link)window.location.href=link}});wr.addEventListener('pointerleave',function(){clearTimeout(longPress);longPress=null})}}
 function showEmpty(){const ld=document.getElementById('loadingIndicator');if(ld)ld.remove();if(mc.querySelector('.empty-state'))return;const d=document.createElement('div');d.className='empty-state';d.innerHTML='<img src="/svg/chat.svg" class="icon"> 暂无消息';mc.appendChild(d)}
 function showNoMore(){let el=mc.querySelector('.no-more');if(!el){el=document.createElement('div');el.className='no-more';el.textContent='没有内容了';mc.insertBefore(el,mc.firstChild)}}
@@ -120,13 +139,14 @@ function loadMessages(offset,prepend){if(isLoading)return Promise.resolve();isLo
 function loadHistory(){loadMessages(0,false)}
 function handleNewMessage(msg){const t=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});addMessage(msg.username,msg.content,t,msg.avatar_url,msg.username===un);mc.scrollTop=mc.scrollHeight;}
 function initPusher(){if(pusher&&channelBound)return;fetch('/api/pusher/config').then(r=>r.json()).then(d=>{if(!d.success){toast.error('连接聊天失败');return}pusher=new Pusher(d.key,{cluster:d.cluster});function bindOnce(){if(channelBound)return;if(!channel)channel=pusher.subscribe('chat');channel.bind('new-message',handleNewMessage);channelBound=true}pusher.connection.bind('state_change',function(states){if(states.current==='connected')bindOnce()});if(pusher.connection.state==='connected')bindOnce()}).catch(()=>{toast.error('连接聊天失败')})}
-function sendMessage(){const text=mi.value.trim();if(!text)return;const isAi=un!=='纪失'&&text.startsWith('@纪失 ');let q='';if(isAi)q=text.substring(4).trim();sb.disabled=true;sb.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner"> 发送中...';mi.value='';autoResize();fetch('/api/send-message',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success){toast.error(d.error||'发送失败');sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';return}if(isAi&&q){const delay=Math.floor(Math.random()*5000)+3000;setTimeout(()=>{fetch('/api/ai-ask',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,question:q})}).then(r=>r.json()).then(ad=>{if(!ad.success)toast.error('请求失败：'+(ad.error||'未知错误'))}).catch(()=>{toast.error('网络错误')})},delay)}}).catch(()=>{toast.error('发送失败')}).finally(()=>{sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';mi.blur()})}
+function sendMessage(){const text=mi.value.trim();if(!text)return;const isAi=un!=='纪失'&&text.startsWith('@纪失 ');let q='';if(isAi)q=text.substring(4).trim();sb.disabled=true;sb.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner"> 发送中...';mi.value='';autoResize();closePanel();fetch('/api/send-message',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success){toast.error(d.error||'发送失败');sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';return}if(isAi&&q){const delay=Math.floor(Math.random()*5000)+3000;setTimeout(()=>{fetch('/api/ai-ask',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,question:q})}).then(r=>r.json()).then(ad=>{if(!ad.success)toast.error('请求失败：'+(ad.error||'未知错误'))}).catch(()=>{toast.error('网络错误')})},delay)}}).catch(()=>{toast.error('发送失败')}).finally(()=>{sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';mi.blur()})}
 function checkAnnouncement(){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success){const stored=localStorage.getItem('announce_dismiss');const isDismissed=(stored===d.updated_at);if(d.is_active&&!isDismissed){toast.success('公告加载成功');at.textContent=d.title||'公告';ac.textContent=d.content||'';ad.checked=false;ao.classList.remove('hidden')}}}).catch(()=>{})}
 acf.addEventListener('click',function(){toast.success('你已确认公告');if(ad.checked){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success&&d.updated_at)localStorage.setItem('announce_dismiss',d.updated_at)}).catch(()=>{})}ao.classList.add('hidden')});
 ib.addEventListener('click',function(){ii.click()});
 ii.addEventListener('change',async function(){let file=this.files[0];if(!file)return;if(file.size>200*1024){try{file=await compressImage(file,800,0.7)}catch(err){console.error(err);toast.error('图片压缩失败');this.value='';return}}if(file.size>7.5*1024*1024){toast.error('图片不能超过7.5MB');this.value='';return}ib.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner">';ib.disabled=true;const fd=new FormData();fd.append('image',file);try{const resp=await fetch('/api/upload-image',{method:'POST',body:fd,credentials:'include'});const data=await resp.json();if(data.success)toast.success('图片已发送');else toast.error(data.error||'上传失败')}catch(err){console.error(err);toast.error('网络错误，请重试')}finally{ib.innerHTML='<img src="/svg/img.svg" class="icon-md">';ib.disabled=false;this.value=''}});
 fetch('/api/user').then(r=>r.json()).then(d=>{if(d.success){un=d.username;hu.textContent=un;if(d.qq_number)myAvatar=`https://q1.qlogo.cn/g?b=qq&nk=${d.qq_number}&s=640`;else myAvatar=null;updateHeaderAvatar(myAvatar);loadHistory();initPusher();checkAnnouncement()}else window.location.href='/login'}).catch(()=>{window.location.href='/login'});
 sb.addEventListener('click',sendMessage);hpb.addEventListener('click',()=>{window.location.href='/profile'});st.addEventListener('click',()=>{window.location.href='/profile'});
+mi.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 mc.addEventListener('scroll',function(){if(this.scrollTop===0&&hasMore&&!isLoading&&!firstLoad){currentOffset+=pageSize;loadMessages(currentOffset,true)}sessionStorage.setItem('chat_scroll_top',this.scrollTop.toString())});
 }();
 </script>
