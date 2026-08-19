@@ -8,6 +8,7 @@ import base64
 import requests
 from werkzeug.utils import secure_filename
 import oss2
+from oss2.credentials import EnvironmentVariableCredentialsProvider
 import uuid
 from datetime import datetime
 
@@ -152,17 +153,15 @@ def upload_image():
     if size > 7.5 * 1024 * 1024:
         return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
 
-    access_key_id = os.environ.get("ALIYUN_OSS_ID")
-    access_key_secret = os.environ.get("ALIYUN_OSS_SECRET")
+    # 使用环境变量读取凭证（已配置）
     bucket_name = "t6cc"
-    endpoint = "oss-cn-hongkong.aliyuncs.com"
+    endpoint = "https://oss-cn-hongkong.aliyuncs.com"   # 必须包含协议
+    region = "cn-hongkong"                              # 显式指定区域
 
-    if not access_key_id or not access_key_secret:
-        return jsonify({"success": False, "error": "OSS密钥未配置"}), 500
-
+    # 使用 V4 签名（推荐）
     try:
-        auth = oss2.Auth(access_key_id, access_key_secret)
-        bucket = oss2.Bucket(auth, endpoint, bucket_name)
+        auth = oss2.ProviderAuthV4(EnvironmentVariableCredentialsProvider())
+        bucket = oss2.Bucket(auth, endpoint, bucket_name, region=region)
 
         ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
         if ext not in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']:
@@ -181,7 +180,7 @@ def upload_image():
                 "detail": f"响应头: {result.headers}"
             }), 500
 
-        image_url = f"https://{bucket_name}.{endpoint}/{filename}"
+        image_url = f"https://{bucket_name}.{endpoint.replace('https://', '')}/{filename}"
 
         img_markdown = f"![图片]({image_url})"
 
