@@ -175,7 +175,11 @@ def upload_image():
         })
 
         if result.status != 200:
-            return jsonify({"success": False, "error": f"OSS上传失败: {result.status}"}), 500
+            return jsonify({
+                "success": False,
+                "error": f"OSS上传失败，状态码: {result.status}",
+                "detail": f"响应头: {result.headers}"
+            }), 500
 
         image_url = f"https://{bucket_name}.{endpoint}/{filename}"
 
@@ -232,6 +236,14 @@ def upload_image():
         return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
 
     except oss2.exceptions.OssError as e:
-        return jsonify({"success": False, "error": f"OSS错误: {str(e)}"}), 500
+        return jsonify({
+            "success": False,
+            "error": "OSS服务错误",
+            "detail": f"错误代码: {e.code}, 消息: {e.message}, 请求ID: {e.request_id}"
+        }), 500
     except Exception as e:
-        return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
+        return jsonify({
+            "success": False,
+            "error": "上传失败",
+            "detail": str(e)
+        }), 500
