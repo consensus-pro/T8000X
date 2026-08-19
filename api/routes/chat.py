@@ -152,13 +152,17 @@ def upload_image():
     if size > 7.5 * 1024 * 1024:
         return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
 
-    access_key_id = os.environ.get("ALIYUN_OSS_ID")
-    access_key_secret = os.environ.get("ALIYUN_OSS_SECRET")
+    # ===== 硬编码 AccessKey（仅用于测试，请勿提交到仓库） =====
+    access_key_id = "LTAI5t9vgVA1msXhkSBT1TYJ"
+    access_key_secret = "bjnE1l6em56wSf5l5aRhPknG20q9bV"
+    # ===== 测试结束后请改回环境变量 =====
+
     bucket_name = "t6cc"
     endpoint = "oss-cn-hongkong.aliyuncs.com"
 
-    if not access_key_id or not access_key_secret:
-        return jsonify({"success": False, "error": "OSS密钥未配置"}), 500
+    # 不再检查环境变量，直接使用硬编码
+    # if not access_key_id or not access_key_secret:
+    #     return jsonify({"success": False, "error": "OSS密钥未配置"}), 500
 
     try:
         auth = oss2.Auth(access_key_id, access_key_secret)
