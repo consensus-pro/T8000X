@@ -7,10 +7,6 @@ import os
 import base64
 import requests
 from werkzeug.utils import secure_filename
-import oss2
-from oss2.credentials import EnvironmentVariableCredentialsProvider
-import uuid
-from datetime import datetime
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -153,35 +149,28 @@ def upload_image():
     if size > 7.5 * 1024 * 1024:
         return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
 
-    # 使用环境变量读取凭证（已配置）
-    bucket_name = "t6cc"
-    endpoint = "https://oss-cn-hongkong.aliyuncs.com"   # 必须包含协议
-    region = "cn-hongkong"                              # 显式指定区域
+    IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
+    if not IMGBB_API_KEY:
+        return jsonify({"success": False, "error": "APIKEY未配置"}), 500
 
-    # 使用 V4 签名（推荐）
     try:
-        auth = oss2.ProviderAuthV4(EnvironmentVariableCredentialsProvider())
-        bucket = oss2.Bucket(auth, endpoint, bucket_name, region=region)
-
-        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
-        if ext not in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']:
-            ext = 'jpg'
-        filename = f"chat/{datetime.now().strftime('%Y/%m/%d')}/{uuid.uuid4().hex}.{ext}"
-
         file_bytes = file.read()
-        result = bucket.put_object(filename, file_bytes, headers={
-            'Content-Type': file.content_type or f'image/{ext}'
-        })
+        base64_data = base64.b64encode(file_bytes).decode('utf-8')
 
-        if result.status != 200:
-            return jsonify({
-                "success": False,
-                "error": f"OSS上传失败，状态码: {result.status}",
-                "detail": f"响应头: {result.headers}"
-            }), 500
+        url = "https://api.imgbb.com/1/upload"
+        payload = {
+            "key": IMGBB_API_KEY,
+            "image": base64_data,
+            "name": secure_filename(file.filename)
+        }
+        resp = requests.post(url, data=payload, timeout=15)
+        result = resp.json()
 
-        image_url = f"https://{bucket_name}.{endpoint.replace('https://', '')}/{filename}"
+        if not result.get("success"):
+            error_msg = result.get("error", {}).get("message", "未知错误")
+            return jsonify({"success": False, "error": f"ImgBB 上传失败: {error_msg}"}), 500
 
+        image_url = result["data"]["url"]
         img_markdown = f"![图片]({image_url})"
 
         conn = get_db_connection()
@@ -234,15 +223,7 @@ def upload_image():
 
         return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
 
-    except oss2.exceptions.OssError as e:
-        return jsonify({
-            "success": False,
-            "error": "OSS服务错误",
-            "detail": f"错误代码: {e.code}, 消息: {e.message}, 请求ID: {e.request_id}"
-        }), 500
+    except requests.exceptions.Timeout:
+        return jsonify({"success": False, "error": "上传超时"}), 500
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": "上传失败",
-            "detail": str(e)
-        }), 500
+        return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
