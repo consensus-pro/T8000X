@@ -64,17 +64,17 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .function-panel .func-btn:hover{background:#e5e5e5}
 .function-panel .func-btn .icon-md{width:24px;height:24px}
 .function-panel .func-btn .icon-sm{width:18px;height:18px}
-.announcement-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;justify-content:center;align-items:center;padding:20px}
-.announcement-overlay.hidden{display:none}
-.announcement-modal{background:#fff;border-radius:16px;padding:24px 24px 16px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;position:relative}
-.announcement-modal .title-line{border-top:2px solid #000;margin-bottom:16px;padding-top:8px}
-.announcement-modal h2{font-size:20px;margin-bottom:12px;color:#0a0a0a;margin-top:0}
-.announcement-modal .ann-content{font-size:15px;color:#333;margin-bottom:20px;white-space:pre-wrap;word-break:break-word;line-height:1.6;max-height:200px;overflow-y:auto;text-align:left}
+.announcement-overlay,.error-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;justify-content:center;align-items:center;padding:20px}
+.announcement-overlay.hidden,.error-overlay.hidden{display:none}
+.announcement-modal,.error-modal{background:#fff;border-radius:16px;padding:24px 24px 16px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;position:relative}
+.announcement-modal .title-line,.error-modal .title-line{border-top:2px solid #000;margin-bottom:16px;padding-top:8px}
+.announcement-modal h2,.error-modal h2{font-size:20px;margin-bottom:12px;color:#0a0a0a;margin-top:0}
+.announcement-modal .ann-content,.error-modal .err-content{font-size:15px;color:#333;margin-bottom:20px;white-space:pre-wrap;word-break:break-word;line-height:1.6;max-height:200px;overflow-y:auto;text-align:left}
 .announcement-modal .dismiss-row{display:flex;align-items:center;justify-content:flex-start;gap:6px;margin-bottom:14px}
 .announcement-modal .dismiss-row input[type="checkbox"]{width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#000}
 .announcement-modal .dismiss-row label{font-size:14px;color:#555;cursor:pointer}
-.announcement-modal .btn-confirm{display:block;width:100%;padding:10px 0;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px}
-.announcement-modal .btn-confirm:hover{background:#222}
+.announcement-modal .btn-confirm,.error-modal .btn-close{display:block;width:100%;padding:10px 0;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px}
+.announcement-modal .btn-confirm:hover,.error-modal .btn-close:hover{background:#222}
 .avatar-placeholder {width: 36px;height: 36px;border-radius: 50%;background: #e5e7eb;overflow: hidden;display: flex;align-items: center;justify-content: center;}
 .avatar-placeholder img {width: 100%;height: 100%;object-fit: cover;filter: brightness(0) saturate(0%) opacity(0.6);}
 .hidden-input {display: none;}
@@ -99,7 +99,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <div class="messages" id="messagesContainer"><div class="loading-state" id="loadingIndicator"><img src="/svg/loading.svg" class="icon spinner"><span>加载中...</span></div></div>
 <div class="input-area">
 <textarea id="messageInput" placeholder="输入消息..." maxlength="500" rows="1"></textarea>
-<button class="input-btn toggle-btn" id="togglePanelBtn"><img src="/svg/plus.svg" class="icon-md"></button>
+<button class="input-btn toggle-btn" id="togglePanelBtn"><img src="/svg/switch.svg" class="icon-md"></button>
 <button class="send-btn" id="sendBtn"><img src="/svg/send.svg" class="icon-sm"> 发送</button>
 </div>
 <div class="function-panel" id="functionPanel">
@@ -109,13 +109,19 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <div class="func-btn" data-func="user"><img src="/svg/user.svg" class="icon-md"><span>用户</span></div>
 </div>
 </div>
+<!-- 公告弹窗 -->
 <div class="announcement-overlay hidden" id="announceOverlay">
 <div class="announcement-modal"><div class="title-line"></div><h2 id="announceTitle">公告标题</h2><div class="ann-content" id="announceContent"></div><div class="dismiss-row"><input type="checkbox" id="announceDismiss"><label for="announceDismiss">不再弹出此公告</label></div><button class="btn-confirm" id="announceConfirm">确认</button></div>
 </div>
+<!-- 错误弹窗 -->
+<div class="error-overlay hidden" id="errorOverlay">
+<div class="error-modal"><div class="title-line"></div><h2>⚠️ 上传错误</h2><div class="err-content" id="errorContent"></div><button class="btn-close" id="errorConfirm">确认</button></div>
+</div>
+
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ii=$('imageInput'),tp=$('togglePanelBtn'),fp=$('functionPanel');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),tp=$('togglePanelBtn'),fp=$('functionPanel'),eo=$('errorOverlay'),ec=$('errorContent'),ecf=$('errorConfirm');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -135,6 +141,8 @@ function handleNewMessage(msg){const t=new Date().toLocaleTimeString('zh-CN',{ho
 function initPusher(){if(pusher&&channelBound)return;fetch('/api/pusher/config').then(r=>r.json()).then(d=>{if(!d.success){toast.error('连接聊天失败');return}pusher=new Pusher(d.key,{cluster:d.cluster});function bindOnce(){if(channelBound)return;if(!channel)channel=pusher.subscribe('chat');channel.bind('new-message',handleNewMessage);channelBound=true}pusher.connection.bind('state_change',function(states){if(states.current==='connected')bindOnce()});if(pusher.connection.state==='connected')bindOnce()}).catch(()=>{toast.error('连接聊天失败')})}
 function sendMessage(){const text=mi.value.trim();if(!text)return;const isAi=un!=='纪失'&&text.startsWith('@纪失 ');let q='';if(isAi)q=text.substring(4).trim();sb.disabled=true;sb.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner"> 发送中...';mi.value='';autoResize();fetch('/api/send-message',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success){toast.error(d.error||'发送失败');sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';return}if(isAi&&q){const delay=Math.floor(Math.random()*5000)+3000;setTimeout(()=>{fetch('/api/ai-ask',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,question:q})}).then(r=>r.json()).then(ad=>{if(!ad.success)toast.error('请求失败：'+(ad.error||'未知错误'))}).catch(()=>{toast.error('网络错误')})},delay)}}).catch(()=>{toast.error('发送失败')}).finally(()=>{sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';mi.blur()})}
 function checkAnnouncement(){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success){const stored=localStorage.getItem('announce_dismiss');const isDismissed=(stored===d.updated_at);if(d.is_active&&!isDismissed){toast.success('公告加载成功');at.textContent=d.title||'公告';ac.textContent=d.content||'';ad.checked=false;ao.classList.remove('hidden')}}}).catch(()=>{})}
+function showErrorModal(msg){ec.textContent=msg||'未知错误';eo.classList.remove('hidden')}
+ecf.addEventListener('click',function(){eo.classList.add('hidden')});
 acf.addEventListener('click',function(){toast.success('你已确认公告');if(ad.checked){fetch('/api/announcement').then(r=>r.json()).then(d=>{if(d.success&&d.updated_at)localStorage.setItem('announce_dismiss',d.updated_at)}).catch(()=>{})}ao.classList.add('hidden')});
 // 隐藏的图片input
 const imageInput = document.createElement('input');
@@ -149,7 +157,6 @@ ii2.addEventListener('change', async function(){
   let file = this.files[0];
   if(!file) return;
   const imageFuncBtn = fp.querySelector('.func-btn[data-func="image"]');
-  // 显示loading
   imageFuncBtn.innerHTML = '<img src="/svg/loading.svg" class="icon-sm spinner"><span>上传中...</span>';
   imageFuncBtn.style.pointerEvents = 'none';
   try {
@@ -158,13 +165,13 @@ ii2.addEventListener('change', async function(){
         file = await compressImage(file, 800, 0.7);
       } catch(err) {
         console.error(err);
-        toast.error('图片压缩失败');
+        showErrorModal('图片压缩失败: ' + (err.message || err));
         this.value = '';
         return;
       }
     }
     if(file.size > 7.5 * 1024 * 1024){
-      toast.error('图片不能超过7.5MB');
+      showErrorModal('图片不能超过7.5MB');
       this.value = '';
       return;
     }
@@ -179,13 +186,14 @@ ii2.addEventListener('change', async function(){
     if(data.success) {
       toast.success('图片已发送');
     } else {
-      toast.error(data.error || '上传失败');
+      let errMsg = data.error || '上传失败';
+      if(data.detail) errMsg += '\n\n详情: ' + data.detail;
+      showErrorModal(errMsg);
     }
   } catch(err) {
     console.error(err);
-    toast.error('网络错误，请重试');
+    showErrorModal('网络错误: ' + (err.message || err));
   } finally {
-    // 恢复按钮
     imageFuncBtn.innerHTML = '<img src="/svg/img.svg" class="icon-md"><span>图片</span>';
     imageFuncBtn.style.pointerEvents = '';
     this.value = '';
@@ -201,7 +209,6 @@ fp.querySelectorAll('.func-btn').forEach(function(btn){
   btn.addEventListener('click', function(){
     const type = this.dataset.func;
     if(type === 'image') {
-      // 触发文件选择
       ii2.click();
     } else if(type === 'transfer') {
       toast.success('测试2');
