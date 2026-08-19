@@ -7,6 +7,8 @@ import os
 import base64
 import requests
 from werkzeug.utils import secure_filename
+import oss2
+import uuid
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -149,81 +151,77 @@ def upload_image():
     if size > 7.5 * 1024 * 1024:
         return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
 
-    IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
-    if not IMGBB_API_KEY:
-        return jsonify({"success": False, "error": "APIKEY未配置"}), 500
+    OSS_ACCESS_KEY_ID = os.environ.get("OSS_ACCESS_KEY_ID")
+    OSS_ACCESS_KEY_SECRET = os.environ.get("OSS_ACCESS_KEY_SECRET")
+    OSS_ENDPOINT = os.environ.get("OSS_ENDPOINT")
+    OSS_BUCKET_NAME = os.environ.get("OSS_BUCKET_NAME")
+    OSS_BASE_URL = os.environ.get("OSS_BASE_URL")
+
+    if not all([OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET, OSS_ENDPOINT, OSS_BUCKET_NAME]):
+        return jsonify({"success": False, "error": "OSS配置未完整"}), 500
 
     try:
+        auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
+        bucket = oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME)
         file_bytes = file.read()
-        base64_data = base64.b64encode(file_bytes).decode('utf-8')
-
-        url = "https://api.imgbb.com/1/upload"
-        payload = {
-            "key": IMGBB_API_KEY,
-            "image": base64_data,
-            "name": secure_filename(file.filename)
-        }
-        resp = requests.post(url, data=payload, timeout=15)
-        result = resp.json()
-
-        if not result.get("success"):
-            error_msg = result.get("error", {}).get("message", "未知错误")
-            return jsonify({"success": False, "error": f"ImgBB 上传失败: {error_msg}"}), 500
-
-        image_url = result["data"]["url"]
-        img_markdown = f"![图片]({image_url})"
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE users 
-            SET last_message_time = NOW() 
-            WHERE username = %s 
-              AND (last_message_time IS NULL OR last_message_time < NOW() - INTERVAL '1 second')
-        """, (username,))
-        if cur.rowcount == 0:
-            cur.close()
-            conn.close()
-            return jsonify({"success": False, "error": "发送过于频繁"}), 429
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT qq_number FROM users WHERE username = %s", (username,))
-        user = cur.fetchone()
-        if not user:
-            cur.close()
-            conn.close()
-            session.pop("username", None)
-            return jsonify({"success": False, "error": "用户不存在"}), 401
-
-        avatar_url = None
-        if user.get("qq_number"):
-            avatar_url = f"https://q1.qlogo.cn/g?b=qq&nk={user['qq_number']}&s=640"
-
-        cur.execute(
-            "INSERT INTO messages (username, content) VALUES (%s, %s) RETURNING id",
-            (username, img_markdown)
-        )
-        msg_id = cur.fetchone()["id"]
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        try:
-            pusher_client.trigger("chat", "new-message", {
-                "username": username,
-                "content": img_markdown,
-                "avatar_url": avatar_url
-            })
-        except Exception as e:
-            pass
-
-        return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
-
-    except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "上传超时"}), 500
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+        new_filename = f"{uuid.uuid4().hex}.{ext}"
+        bucket.put_object(new_filename, file_bytes)
+        if OSS_BASE_URL:
+            image_url = f"{OSS_BASE_URL.rstrip('/')}/{new_filename}"
+        else:
+            image_url = f"https://{OSS_BUCKET_NAME}.{OSS_ENDPOINT}/{new_filename}"
     except Exception as e:
-        return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
+        return jsonify({"success": False, "error": f"OSS上传失败: {str(e)}"}), 500
+
+    img_markdown = f"![图片]({image_url})"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE users 
+        SET last_message_time = NOW() 
+        WHERE username = %s 
+          AND (last_message_time IS NULL OR last_message_time < NOW() - INTERVAL '1 second')
+    """, (username,))
+    if cur.rowcount == 0:
+        cur.close()
+        conn.close()
+        return jsonify({"success": False, "error": "发送过于频繁"}), 429
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("SELECT qq_number FROM users WHERE username = %s", (username,))
+    user = cur.fetchone()
+    if not user:
+        cur.close()
+        conn.close()
+        session.pop("username", None)
+        return jsonify({"success": False, "error": "用户不存在"}), 401
+
+    avatar_url = None
+    if user.get("qq_number"):
+        avatar_url = f"https://q1.qlogo.cn/g?b=qq&nk={user['qq_number']}&s=640"
+
+    cur.execute(
+        "INSERT INTO messages (username, content) VALUES (%s, %s) RETURNING id",
+        (username, img_markdown)
+    )
+    msg_id = cur.fetchone()["id"]
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    try:
+        pusher_client.trigger("chat", "new-message", {
+            "username": username,
+            "content": img_markdown,
+            "avatar_url": avatar_url
+        })
+    except Exception as e:
+        pass
+
+    return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
