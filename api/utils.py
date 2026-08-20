@@ -49,3 +49,27 @@ def is_allowed_email(email):
     domains = load_allowed_domains()
     domain = email.split('@')[-1].lower()
     return domain in domains
+
+def update_page_view(page_path):
+    if not page_path or page_path.startswith('/api') or page_path.startswith('/svg') or page_path.startswith('/static'):
+        return
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO page_views (page_path, view_count, last_visited)
+        VALUES (%s, 1, CURRENT_TIMESTAMP)
+        ON CONFLICT (page_path)
+        DO UPDATE SET view_count = page_views.view_count + 1, last_visited = CURRENT_TIMESTAMP
+    """, (page_path,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def get_page_views():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT page_path, view_count, last_visited FROM page_views ORDER BY view_count DESC")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
