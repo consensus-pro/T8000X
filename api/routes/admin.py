@@ -31,11 +31,8 @@ def admin_login():
     now = time.time()
     if username in admin_login_attempts:
         record = admin_login_attempts[username]
-        if record.get("locked_until") and now < record["locked_until"]:
-            remaining = int(record["locked_until"] - now)
-            return jsonify({"success": False, "error": f"该账号已被锁定 请于 {remaining} 秒后再试"}), 429
-        elif record.get("locked_until") and now >= record["locked_until"]:
-            del admin_login_attempts[username]
+        if record.get("permanent_locked"):
+            return jsonify({"success": False, "error": "该账号已被永久锁定，请联系管理员"}), 403
 
     admin_user = os.environ.get("ADMIN_ACCOUNT")
     admin_pass = os.environ.get("ADMIN_PASSWORD")
@@ -45,16 +42,14 @@ def admin_login():
         session["admin"] = username
         return jsonify({"success": True, "message": "登录成功 账号密码有效"})
     else:
-        record = admin_login_attempts.get(username, {"count": 0, "locked_until": None})
+        record = admin_login_attempts.get(username, {"count": 0, "permanent_locked": False})
         record["count"] += 1
-        remaining_attempts = 5 - record["count"]
-        if remaining_attempts < 0:
-            remaining_attempts = 0
-        if record["count"] >= 5:
-            record["locked_until"] = now + 10000
+        if record["count"] >= 10:
+            record["permanent_locked"] = True
             admin_login_attempts[username] = record
-            return jsonify({"success": False, "error": "账号已被锁定 请于 10000 秒后再试"}), 401
+            return jsonify({"success": False, "error": "该账号已被永久锁定，请联系管理员"}), 403
         else:
+            remaining_attempts = 10 - record["count"]
             admin_login_attempts[username] = record
             return jsonify({"success": False, "error": f"账号或密码错误 你还可再试 {remaining_attempts} 次"}), 401
 
