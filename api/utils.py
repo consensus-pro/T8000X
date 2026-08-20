@@ -51,7 +51,7 @@ def is_allowed_email(email):
     return domain in domains
 
 def update_page_view(page_path):
-    if not page_path or page_path.startswith('/api') or page_path.startswith('/svg') or page_path.startswith('/static'):
+    if not page_path or page_path.startswith('/api') or page_path.startswith('/svg') or page_path.startswith('/static') or page_path.startswith('/user'):
         return
     conn = get_db_connection()
     cur = conn.cursor()
