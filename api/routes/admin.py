@@ -186,3 +186,17 @@ def admin_delete_message(msg_id):
     cur.close()
     conn.close()
     return jsonify({"success": True, "message": "消息已删除"})
+
+@admin_bp.route("/api/admin/page-views", methods=["GET"])
+def admin_get_page_views():
+    admin_username = session.get("admin")
+    if not admin_username:
+        return jsonify({"success": False, "error": "未登录"}), 401
+    from ..utils import get_page_views
+    rows = get_page_views()
+    total = sum(row[1] for row in rows)
+    return jsonify({
+        "success": True,
+        "total": total,
+        "views": [{"path": r[0], "count": r[1], "last_visited": r[2].strftime("%Y-%m-%d %H:%M:%S") if r[2] else None} for r in rows]
+    })
