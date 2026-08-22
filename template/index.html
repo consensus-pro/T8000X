@@ -120,7 +120,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <div class="function-panel" id="functionPanel">
 <div class="func-item" id="funcUpload"><img src="/svg/img.svg" class="func-icon" id="funcIcon1"><span class="func-label" id="funcLabel1">图片</span></div>
 <div class="func-item" id="funcAI"><img src="/svg/code.svg" class="func-icon"><span class="func-label">调用AI</span></div>
-<div class="func-item" data-func="3"><img src="/svg/time.svg" class="func-icon"><span class="func-label">测试3</span></div>
+<div class="func-item" id="funcCode"><img src="/svg/code.svg" class="func-icon"><span class="func-label">代码上传</span></div>
 <div class="func-item" data-func="4"><img src="/svg/time.svg" class="func-icon"><span class="func-label">测试4</span></div>
 </div>
 </div>
@@ -128,10 +128,11 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <div class="announcement-modal"><div class="title-line"></div><h2 id="announceTitle">公告标题</h2><div class="ann-content" id="announceContent"></div><div class="dismiss-row"><input type="checkbox" id="announceDismiss"><label for="announceDismiss">不再弹出此公告</label></div><button class="btn-confirm" id="announceConfirm">确认</button></div>
 </div>
 <input type="file" id="imageInput" accept="image/*" class="hidden-input">
+<input type="file" id="codeFileInput" accept=".html,.htm,.js,.css,.py,.java,.c,.cpp,.cxx,.cc,.h,.hpp,.go,.rs,.json,.xml,.txt,.sh,.bash,.ps1,.rb,.php,.lua,.pl,.pm,.swift,.kt,.dart,.ts,.tsx,.jsx,.vue,.svelte" style="display:none">
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ii=$('imageInput'),pb=$('plusBtn'),fp=$('functionPanel'),pi=pb.querySelector('.plus-icon'),fu=$('funcUpload'),fIcon=$('funcIcon1'),fLabel=$('funcLabel1'),funcAI=$('funcAI');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0,isUploading=!1;
+!function(){const $=id=>document.getElementById(id),mc=$('messagesContainer'),mi=$('messageInput'),sb=$('sendBtn'),hu=$('headerUsername'),hac=$('headerAvatarContainer'),hpb=$('headerProfileBtn'),st=$('settingsBtn'),li=$('loadingIndicator'),ao=$('announceOverlay'),at=$('announceTitle'),ac=$('announceContent'),ad=$('announceDismiss'),acf=$('announceConfirm'),ii=$('imageInput'),pb=$('plusBtn'),fp=$('functionPanel'),pi=pb.querySelector('.plus-icon'),fu=$('funcUpload'),fIcon=$('funcIcon1'),fLabel=$('funcLabel1'),funcAI=$('funcAI'),funcCode=$('funcCode'),cfi=$('codeFileInput');let un='',pusher=null,channel=null,myAvatar=null,channelBound=!1,longPress=null,historyLoaded=!1,currentOffset=0,pageSize=50,hasMore=!0,isLoading=!1,firstLoad=!0,isUploading=!1;
 function autoResize(){mi.style.height='auto';mi.style.height=Math.min(mi.scrollHeight,120)+'px'}mi.addEventListener('input',autoResize);
 function decodeHtml(h){if(!h)return'';const t=document.createElement('textarea');t.innerHTML=h;return t.value}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>"']/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';if(m==='"')return'&quot;';if(m==="'")return'&#039;';return m})}
@@ -160,8 +161,10 @@ sb.addEventListener('click',sendMessage);hpb.addEventListener('click',()=>{windo
 mc.addEventListener('scroll',function(){if(this.scrollTop===0&&hasMore&&!isLoading&&!firstLoad){currentOffset+=pageSize;loadMessages(currentOffset,true)}sessionStorage.setItem('chat_scroll_top',this.scrollTop.toString())});
 pb.addEventListener('click',function(){pi.classList.toggle('rotated');fp.classList.toggle('open')});
 fu.addEventListener('click',function(){if(isUploading)return;ii.click()});
-fp.querySelectorAll('.func-item:not(#funcUpload):not(#funcAI)').forEach(function(item){item.addEventListener('click',function(){const num=this.dataset.func;toast.success('测试'+num)})});
+fp.querySelectorAll('.func-item:not(#funcUpload):not(#funcAI):not(#funcCode)').forEach(function(item){item.addEventListener('click',function(){const num=this.dataset.func;toast.success('测试'+num)})});
 funcAI.addEventListener('click',function(){toast.success('已@纪失 请输入调用内容');mi.value='@纪失 ';mi.focus();autoResize()});
+funcCode.addEventListener('click',function(){cfi.click()});
+cfi.addEventListener('change',function(e){const file=this.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(ev){let content=ev.target.result;const ext=file.name.split('.').pop().toLowerCase();const langMap={'html':'html','htm':'html','js':'javascript','css':'css','py':'python','java':'java','c':'c','cpp':'cpp','cxx':'cpp','cc':'cpp','h':'c','hpp':'cpp','go':'go','rs':'rust','json':'json','xml':'xml','txt':'text','sh':'bash','bash':'bash','ps1':'powershell','rb':'ruby','php':'php','lua':'lua','pl':'perl','pm':'perl','swift':'swift','kt':'kotlin','dart':'dart','ts':'typescript','tsx':'tsx','jsx':'jsx','vue':'vue','svelte':'svelte'};const lang=langMap[ext]||'text';const msg='```'+lang+'\n'+content+'\n```';sb.disabled=true;sb.innerHTML='<img src="/svg/loading.svg" class="icon-sm spinner"> 发送中...';fetch('/api/send-message',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({content:msg})}).then(r=>r.json()).then(d=>{if(!d.success){toast.error(d.error||'发送失败')}else{toast.success('代码已发送')}}).catch(()=>{toast.error('发送失败')}).finally(()=>{sb.disabled=false;sb.innerHTML='<img src="/svg/send.svg" class="icon-sm"> 发送';});this.value=''};reader.readAsText(file);});
 mi.addEventListener('focus',function(){if(fp.classList.contains('open')){fp.classList.remove('open');pi.classList.remove('rotated')}});
 mc.addEventListener('click',function(e){var target=e.target;if(target.classList.contains('code-run')){var block=target.closest('.code-block');var codeEl=block.querySelector('.code-body code');var text=codeEl.textContent;var newWin=window.open('','_blank');if(newWin){newWin.document.write(text);newWin.document.close()}else{toast.error('请允许弹出窗口')}e.preventDefault()}});
 }();
