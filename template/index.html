@@ -164,7 +164,7 @@ fu.addEventListener('click',function(){if(isUploading)return;ii.click()});
 fp.querySelectorAll('.func-item:not(#funcUpload):not(#funcAI)').forEach(function(item){item.addEventListener('click',function(){const num=this.dataset.func;toast.success('测试'+num)})});
 funcAI.addEventListener('click',function(){toast.success('已@纪失 请输入调用内容');mi.value='@纪失 ';mi.focus();autoResize()});
 mi.addEventListener('focus',function(){if(fp.classList.contains('open')){fp.classList.remove('open');pi.classList.remove('rotated')}});
-mc.addEventListener('click',function(e){var target=e.target.closest('.code-run');if(target){var block=target.closest('.code-block');var codeEl=block.querySelector('.code-body code');var text=codeEl.textContent;var newWin=window.open('','_blank');if(newWin){newWin.document.write(text);newWin.document.close()}else{toast.error('请允许弹出窗口')}e.preventDefault()}});
+mc.addEventListener('click',function(e){var target=e.target.closest('.code-run');if(target){var block=target.closest('.code-block');var codeEl=block.querySelector('.code-body code');var text=codeEl.textContent;var newWin=window.open('','_blank');if(newWin){newWin.document.write(text);var titleMatch=text.match(/<title>(.*?)<\/title>/i);if(titleMatch&&titleMatch[1]){newWin.document.title=titleMatch[1];}newWin.document.close();}else{toast.error('请允许弹出窗口');}e.preventDefault();}});
 }();
 </script>
 </body>
