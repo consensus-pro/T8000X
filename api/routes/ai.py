@@ -13,7 +13,7 @@ JISHI_USERNAME = "纪失"
 AI_API_KEY = os.environ.get("API_KEY")
 AI_SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT")
 AI_MODEL = "deepseek-chat"
-AI_TIMEOUT = 10
+AI_TIMEOUT = 60
 AI_MAX_HISTORY = 10
 
 def ai_get_history(username, limit=AI_MAX_HISTORY):
@@ -59,7 +59,7 @@ def ai_call_deepseek(messages):
         "model": AI_MODEL,
         "messages": messages,
         "stream": False,
-        "max_tokens": 800,
+        "max_tokens": 7500,
         "temperature": 0.7
     }
     try:
