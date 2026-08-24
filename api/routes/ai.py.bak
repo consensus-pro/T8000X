@@ -16,9 +16,6 @@ AI_MODEL = "deepseek-chat"
 AI_TIMEOUT = 60
 AI_MAX_HISTORY = 10
 
-# 全局最后调用时间锁
-_last_ai_call_time = 0
-
 def ai_get_history(username, limit=AI_MAX_HISTORY):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -105,12 +102,6 @@ def ai_handle_request(username, question):
 
 @ai_bp.route("/api/ai-ask", methods=["POST"])
 def ai_ask():
-    global _last_ai_call_time
-    now = time.time()
-    if now - _last_ai_call_time < 3:
-        return jsonify({"success": False, "error": "AI 正在思考中，请稍后再试"}), 429
-    _last_ai_call_time = now
-
     data = request.get_json()
     username = data.get("username")
     question = data.get("question")
