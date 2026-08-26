@@ -5,87 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>T8000X - 用户主页</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:rgba(0,0,0,0)}
-html,body{width:100%;min-height:100vh;background:#fff}
-body{display:flex;justify-content:center;align-items:center;padding:20px;position:relative}
-.bg-grid{position:fixed;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,0,0,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03)1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
-.container{width:100%;max-width:380px;position:relative;z-index:1;min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.icon{width:16px;height:16px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
-.icon-sm{width:14px;height:14px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
-.icon-gray{filter:brightness(0)saturate(0%)opacity(0.6);width:16px;height:16px}
-.spinner{animation:spin 1.5s linear infinite;display:inline-block}
-@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.hidden{display:none !important}
-.gray-text{color:#999 !important;font-weight:400 !important}
-.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:#aaa;font-size:14px;width:100%;gap:12px}
-.loading-state .icon{width:32px;height:32px;filter:brightness(0)saturate(0%)opacity(0.4)}
-.profile-content{width:100%}
-.avatar-section{text-align:center;margin-bottom:20px}
-#avatarContainer{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:#e5e7eb;position:relative;transition:border-color .3s ease;flex-shrink:0}
-#avatarContainer .avatar-inner{width:100%;height:100%;background-repeat:no-repeat;background-position:center;background-size:105% 105%}
-#avatarContainer.default-avatar .avatar-inner{background-color:#555 !important;mask-image:url('/svg/avatar.svg');-webkit-mask-image:url('/svg/avatar.svg');mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask-position:center;background-size:contain}
-#avatarContainer.qq-avatar .avatar-inner{background-size:cover;filter:none;background-color:transparent !important;mask-image:none !important;-webkit-mask-image:none !important}
-.title{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center;color:#0a0a0a;display:flex;align-items:center;justify-content:center;gap:8px}
-.info-box{background:#f8f8f8;border-radius:10px;padding:18px 20px;margin-bottom:16px}
-.info-box p{margin:8px 0;font-size:15px;color:#333;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.info-box p .icon{opacity:.6;flex-shrink:0}
-.info-box span{color:#0a0a0a;font-weight:600}
-.stats-box{background:#f8f8f8;border-radius:10px;padding:12px 20px;margin-bottom:16px;display:flex;justify-content:space-between;width:100%}
-.stats-box .stat-item{text-align:center;flex:1}
-.stats-box .stat-item .num{font-size:14px;font-weight:700;color:#0a0a0a}
-.stats-box .stat-item .label{font-size:14px;color:#0a0a0a;font-weight:600;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px}
-.btn-back-chat,.btn-error-back{background:#0a0a0a;color:#fff;border:none;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn-back-chat{width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:700}
-.btn-back-chat .icon{filter:brightness(0)invert(1)}
-.btn-error-back{padding:10px 28px;border-radius:8px;font-size:14px}
-.btn-error-back .icon{filter:brightness(0)invert(1)}
-.btn-back-chat:hover,.btn-back-chat:active,.btn-error-back:hover,.btn-error-back:active{background:#0a0a0a}
-#errorContainer{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center;width:100%;min-height:280px;gap:16px}
-#errorContainer .error-icon{width:72px;height:72px;filter:brightness(0)saturate(100%)}
-#errorContainer .error-title{font-size:20px;font-weight:700;color:#333}
-.search-card{background:#fff;border-radius:16px;padding:30px 24px;width:100%;max-width:340px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
-.search-card .search-header{margin-bottom:16px}
-.search-card .search-header h3{font-size:18px;font-weight:600;color:#0a0a0a;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.search-card .search-header .search-sub{font-size:13px;color:#888}
-.search-card .search-row{display:flex;gap:8px;align-items:center}
-.search-card .search-row .input-box{flex:1;position:relative}
-.search-card .search-row .input-box input{width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none;font-family:inherit;background:#fff;height:44px}
-.search-card .search-row .input-box input:focus{border-color:#0a0a0a}
-.search-card .search-row .btn-search{flex-shrink:0;width:44px;height:44px;background:#0a0a0a;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.search-card .search-row .btn-search img{width:20px;height:20px;filter:brightness(0)invert(1)}
-.search-card .search-row .btn-search:hover,.search-card .search-row .btn-search:active{background:#0a0a0a}
+*{m:0;p:0;bx:border-box;f:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:rgba(0,0,0,0)}
+html,body{width:100%;min-height:100vh;bg:#fff}
+body{df:flex;jc:center;ai:center;p:20px;pos:relative}
+.bg{pos:fixed;t:0;l:0;r:0;b:0;bg-img:linear-gradient(rgba(0,0,0,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03)1px,transparent 1px);bg-size:50px 50px;pe:none;z:0}
+.c{width:100%;max-width:380px;pos:relative;z:1;min-height:50vh;df:flex;flex-direction:column;ai:center;jc:center}
+.i{width:16px;height:16px;d:inline-block;va:middle;fs:0;filter:brightness(0)saturate(100%)}
+.is{width:14px;height:14px;d:inline-block;va:middle;fs:0;filter:brightness(0)saturate(100%)}
+.ig{filter:brightness(0)saturate(0%)opacity(0.6);width:16px;height:16px}
+.sp{animation:spn 1.5s linear infinite;d:inline-block}
+@keyframes spn{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.hi{display:none !important}
+.gt{color:#999 !important;fw:400 !important}
+.ls2{df:flex;flex-direction:column;ai:center;jc:center;p:60px 20px;text-align:center;color:#aaa;font-size:14px;width:100%;gap:12px}
+.ls2 .i{width:32px;height:32px;filter:brightness(0)saturate(0%)opacity(0.4)}
+.pc{width:100%}
+.as{text-align:center;mb:20px}
+#ac{d:inline-block;width:80px;height:80px;br:50%;bd:3px solid #0a0a0a;overflow:hidden;bg:#e5e7eb;pos:relative;transition:border-color .3s ease;fs:0}
+#ac .ai{width:100%;height:100%;background-repeat:no-repeat;background-position:center;background-size:105% 105%}
+#ac.da .ai{bg-color:#555 !important;mask-image:url('/svg/avatar.svg');-webkit-mask-image:url('/svg/avatar.svg');mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask-position:center;bg-size:contain}
+#ac.qa .ai{bg-size:cover;filter:none;bg-color:transparent !important;mask-image:none !important;-webkit-mask-image:none !important}
+.ti{font-size:18px;fw:600;mb:20px;text-align:center;color:#0a0a0a;df:flex;ai:center;jc:center;gap:8px}
+.ib{bg:#f8f8f8;br:10px;p:18px 20px;mb:16px}
+.ib p{margin:8px 0;font-size:15px;color:#333;df:flex;ai:center;gap:6px;flex-wrap:wrap}
+.ib p .i{opacity:.6;fs:0}
+.ib span{color:#0a0a0a;fw:600}
+.sb{bg:#f8f8f8;br:10px;p:12px 20px;mb:16px;df:flex;jc:space-between;width:100%}
+.sb .si{text-align:center;flex:1}
+.sb .si .nu{font-size:14px;fw:700;color:#0a0a0a}
+.sb .si .lb{font-size:14px;color:#0a0a0a;fw:600;mt:2px;df:flex;ai:center;jc:center;gap:4px}
+.bb2,.eb{bg:#0a0a0a;color:#fff;bd:none;cursor:pointer;fw:600;d:inline-flex;ai:center;jc:center;gap:8px}
+.bb2{width:100%;p:14px;br:10px;font-size:15px;fw:700}
+.bb2 .i{filter:brightness(0)invert(1)}
+.eb{p:10px 28px;br:8px;font-size:14px}
+.eb .i{filter:brightness(0)invert(1)}
+.bb2:hover,.bb2:active,.eb:hover,.eb:active{bg:#0a0a0a}
+#ec{df:flex;flex-direction:column;ai:center;jc:center;p:30px 20px;text-align:center;width:100%;min-height:280px;gap:16px}
+#ec .ei{width:72px;height:72px;filter:brightness(0)saturate(100%)}
+#ec .et{font-size:20px;fw:700;color:#333}
+.scard{bg:#fff;br:16px;p:30px 24px;width:100%;max-width:340px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
+.scard .sh{mb:16px}
+.scard .sh h3{font-size:18px;fw:600;color:#0a0a0a;mb:4px;df:flex;ai:center;gap:6px}
+.scard .sh .ss{font-size:13px;color:#888}
+.scard .sr2{df:flex;gap:8px;ai:center}
+.scard .sr2 .ib2{flex:1;pos:relative}
+.scard .sr2 .ib2 input{width:100%;p:10px 14px;bd:1px solid #ddd;br:8px;font-size:15px;outline:none;f:inherit;bg:#fff;h:44px}
+.scard .sr2 .ib2 input:focus{bd-color:#0a0a0a}
+.scard .sr2 .bs3{fs:0;width:44px;height:44px;bg:#0a0a0a;bd:none;br:8px;cursor:pointer;df:flex;ai:center;jc:center;p:0}
+.scard .sr2 .bs3 img{width:20px;height:20px;filter:brightness(0)invert(1)}
+.scard .sr2 .bs3:hover,.scard .sr2 .bs3:active{bg:#0a0a0a}
 </style>
 </head>
 <body>
-<div class="bg-grid"></div>
-<div class="container">
-<div id="loadingIndicator" class="loading-state"><img src="/svg/loading.svg" class="icon spinner"><span>加载中...</span></div>
-<div id="normalContent" class="hidden profile-content">
-<div class="avatar-section"><div id="avatarContainer"><div class="avatar-inner" id="avatarInner"></div></div></div>
-<div class="title" id="pageTitle"><img src="/svg/user.svg" class="icon"> 用户资料</div>
-<div class="stats-box"><div class="stat-item"><div class="num" id="rankDisplay">--</div><div class="label"><img src="/svg/ranking.svg" class="icon-sm">排名</div></div><div class="stat-item"><div class="num" id="pointsDisplay">0</div><div class="label"><img src="/svg/coins.svg" class="icon-sm">积分</div></div></div>
-<div class="info-box">
-<p><img src="/svg/user.svg" class="icon">账号：<span id="profileUsername">––</span></p>
-<p><img src="/svg/sign.svg" class="icon">签名：<span id="userSignature">––</span></p>
-<p><img src="/svg/gender.svg" class="icon">性别：<span id="userGender">––</span></p>
-<p><img src="/svg/email.svg" class="icon">邮箱：<span id="profileEmail">––</span></p>
-<p><img src="/svg/time.svg" class="icon">注册时间：<span id="profileCreatedAt">––</span></p>
-<p><img src="/svg/qq.svg" class="icon-gray">绑定QQ：<span id="profileQQ">--</span></p>
+<div class="bg"></div>
+<div class="c">
+<div id="loadingIndicator" class="ls2"><img src="/svg/loading.svg" class="i sp"><span>加载中...</span></div>
+<div id="normalContent" class="hi pc">
+<div class="as"><div id="ac"><div class="ai" id="avatarInner"></div></div></div>
+<div class="ti" id="pageTitle"><img src="/svg/user.svg" class="i"> 用户资料</div>
+<div class="sb"><div class="si"><div class="nu" id="rankDisplay">--</div><div class="lb"><img src="/svg/ranking.svg" class="is">排名</div></div><div class="si"><div class="nu" id="pointsDisplay">0</div><div class="lb"><img src="/svg/coins.svg" class="is">积分</div></div></div>
+<div class="ib">
+<p><img src="/svg/user.svg" class="i">账号：<span id="profileUsername">––</span></p>
+<p><img src="/svg/sign.svg" class="i">签名：<span id="userSignature">––</span></p>
+<p><img src="/svg/gender.svg" class="i">性别：<span id="userGender">––</span></p>
+<p><img src="/svg/email.svg" class="i">邮箱：<span id="profileEmail">––</span></p>
+<p><img src="/svg/time.svg" class="i">注册时间：<span id="profileCreatedAt">––</span></p>
+<p><img src="/svg/qq.svg" class="ig">绑定QQ：<span id="profileQQ">--</span></p>
 </div>
-<button class="btn-back-chat" id="backBtn"><img src="/svg/return.svg" class="icon"> 返回聊天</button>
+<button class="bb2" id="backBtn"><img src="/svg/return.svg" class="i"> 返回聊天</button>
 </div>
-<div id="errorContainer" class="hidden"><img src="/svg/data.svg" class="error-icon"><h1 class="error-title">用户不存在</h1><button class="btn-error-back" id="errorBackBtn"><img src="/svg/return.svg" class="icon"> 返回聊天</button></div>
-<div id="searchContainer" class="hidden" style="width:100%;">
-<div class="search-card">
-<div class="search-header">
-<h3><img src="/svg/net.svg" class="icon" style="width:20px;height:20px;"> 查询用户</h3>
-<div class="search-sub">输入用户名进行搜索</div>
+<div id="errorContainer" class="hi"><img src="/svg/data.svg" class="ei"><h1 class="et">用户不存在</h1><button class="eb" id="errorBackBtn"><img src="/svg/return.svg" class="i"> 返回聊天</button></div>
+<div id="searchContainer" class="hi" style="width:100%;">
+<div class="scard">
+<div class="sh">
+<h3><img src="/svg/net.svg" class="i" style="width:20px;height:20px;"> 查询用户</h3>
+<div class="ss">输入用户名进行搜索</div>
 </div>
-<div class="search-row">
-<div class="input-box">
+<div class="sr2">
+<div class="ib2">
 <input type="text" id="searchUsername" placeholder="账号" autofocus>
 </div>
-<button class="btn-search" id="searchBtn">
+<button class="bs3" id="searchBtn">
 <img src="/svg/search.svg">
 </button>
 </div>
@@ -98,16 +98,16 @@ body{display:flex;justify-content:center;align-items:center;padding:20px;positio
 var $=id=>document.getElementById(id);
 var L=$('loadingIndicator'),N=$('normalContent'),E=$('errorContainer'),S=$('searchContainer');
 var U=$('profileUsername'),M=$('profileEmail'),G=$('userSignature'),X=$('userGender'),T=$('profileCreatedAt'),Q=$('profileQQ');
-var A=$('avatarContainer'),I=$('avatarInner'),R=$('rankDisplay'),P=$('pointsDisplay');
+var A=$('ac'),I=$('avatarInner'),R=$('rankDisplay'),P=$('pointsDisplay');
 var B=$('backBtn'),F=$('errorBackBtn'),H=$('pageTitle');
 var Ipt=$('searchUsername'),Btn=$('searchBtn');
 var api=async(u,m,b)=>{try{var o={method:m||'GET',headers:{'Content-Type':'application/json'},credentials:'include'};if(b)o.body=JSON.stringify(b);var r=await fetch(u,o);return await r.json()}catch(_){return{success:!1,error:'网络连接失败'}}};
 function gc(g){if(g==='男')return '#1677ff';if(g==='女')return '#ff69b4';if(g==='其他')return '#ffc107';return '#888'}
-function ua(q,g){var c=gc(g);A.style.borderColor=c;A.classList.remove('default-avatar','qq-avatar');I.style.backgroundImage='';I.style.backgroundColor='';I.style.maskImage='';I.style.webkitMaskImage='';if(q){A.classList.add('qq-avatar');I.style.backgroundImage='url(https://q1.qlogo.cn/g?b=qq&nk='+q+'&s=640)';I.style.backgroundSize='cover'}else A.classList.add('default-avatar')}
-function se(){L.classList.add('hidden');N.classList.add('hidden');E.classList.remove('hidden');S.classList.add('hidden')}
-function sc(d){L.classList.add('hidden');E.classList.add('hidden');S.classList.add('hidden');N.classList.remove('hidden');U.textContent=d.username;M.textContent=d.email;var p=d.total_points||0;P.textContent=p;R.textContent=(p>0&&d.rank)?'#'+d.rank:'未上榜';var s=d.signature||'未填写';G.textContent=s;G.classList.toggle('gray-text',s==='未填写');var g=d.gender||'不愿透露';X.textContent=g;X.classList.toggle('gray-text',g==='不愿透露');T.textContent=d.created_at||'未知';var q=d.qq_number||'未绑定';Q.textContent=q;Q.classList.toggle('gray-text',q==='未绑定');H.innerHTML='<img src="/svg/user.svg" class="icon"> '+d.username+' 的主页';ua(d.qq_number,g);toast.success('账号信息加载成功')}
-function sh(){L.classList.add('hidden');N.classList.add('hidden');E.classList.add('hidden');S.classList.remove('hidden');document.title='T8000X - 用户搜索';Ipt.focus()}
-async function lp(){var p=new URLSearchParams(window.location.search),u=p.get('id');if(!u){sh();return}L.classList.remove('hidden');N.classList.add('hidden');E.classList.add('hidden');S.classList.add('hidden');var r=await api('/api/user?username='+encodeURIComponent(u),'GET');if(!r.success||r.error==='用户不存在'){se();return}sc(r)}
+function ua(q,g){var c=gc(g);A.style.borderColor=c;A.classList.remove('da','qa');I.style.backgroundImage='';I.style.backgroundColor='';I.style.maskImage='';I.style.webkitMaskImage='';if(q){A.classList.add('qa');I.style.backgroundImage='url(https://q1.qlogo.cn/g?b=qq&nk='+q+'&s=640)';I.style.backgroundSize='cover'}else A.classList.add('da')}
+function se(){L.classList.add('hi');N.classList.add('hi');E.classList.remove('hi');S.classList.add('hi')}
+function sc(d){L.classList.add('hi');E.classList.add('hi');S.classList.add('hi');N.classList.remove('hi');U.textContent=d.username;M.textContent=d.email;var p=d.total_points||0;P.textContent=p;R.textContent=(p>0&&d.rank)?'#'+d.rank:'未上榜';var s=d.signature||'未填写';G.textContent=s;G.classList.toggle('gt',s==='未填写');var g=d.gender||'不愿透露';X.textContent=g;X.classList.toggle('gt',g==='不愿透露');T.textContent=d.created_at||'未知';var q=d.qq_number||'未绑定';Q.textContent=q;Q.classList.toggle('gt',q==='未绑定');H.innerHTML='<img src="/svg/user.svg" class="i"> '+d.username+' 的主页';ua(d.qq_number,g);toast.success('账号信息加载成功')}
+function sh(){L.classList.add('hi');N.classList.add('hi');E.classList.add('hi');S.classList.remove('hi');document.title='T8000X - 用户搜索';Ipt.focus()}
+async function lp(){var p=new URLSearchParams(window.location.search),u=p.get('id');if(!u){sh();return}L.classList.remove('hi');N.classList.add('hi');E.classList.add('hi');S.classList.add('hi');var r=await api('/api/user?username='+encodeURIComponent(u),'GET');if(!r.success||r.error==='用户不存在'){se();return}sc(r)}
 Btn.addEventListener('click',function(){var v=Ipt.value.trim();if(!v){toast.error('请输入用户名');return}window.location.href='/user?id='+encodeURIComponent(v)});
 Ipt.addEventListener('keydown',function(e){if(e.key==='Enter')Btn.click()});
 B.addEventListener('click',()=>{window.location.href='/'});
