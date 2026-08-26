@@ -16,8 +16,8 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .sp{animation:spn 1.5s linear infinite}
 @keyframes spn{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .as{text-align:center;margin-bottom:20px}
-#ac{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:transparent!important;position:relative;transition:border-color .3s;flex-shrink:0}
-#ac img{width:100%;height:100%;object-fit:cover;display:block;background:transparent!important}
+#ac{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:transparent;position:relative;transition:border-color .3s;flex-shrink:0}
+#ac img{width:100%;height:100%;object-fit:cover;display:block}
 .ti{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center;color:#0a0a0a;display:flex;align-items:center;justify-content:center;gap:8px}
 .ib{background:#f8f8f8;border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .ib p{margin:6px 0;font-size:15px;color:#333;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -68,27 +68,31 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .go .go2{display:block;width:100%;padding:6px 20px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:15px;transition:all .2s;background:#f8f8f8;color:#333;text-align:center;user-select:none}
 .go .go2:hover{background:#e5e5e5}
 .go .go2.sel{background:#fff;color:#000;border-color:#000}
-.rm .rl,.am2 .acn{max-height:400px;overflow-y:auto}
+.rm .rl{max-height:400px;overflow-y:auto}
 .rm .ri{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f3f5}
 .rm .ri:last-child{border-bottom:none}
 .rm .ri .rn{font-weight:700;color:#0a0a0a;min-width:28px;font-size:13px}
-.rm .ri .ra{width:28px;height:28px;border-radius:50%;flex-shrink:0;overflow:hidden;background:#e5e7eb;display:flex;align-items:center;justify-content:center}
+.rm .ri .ra{width:28px;height:28px;border-radius:50%;flex-shrink:0;overflow:hidden;background:transparent;display:flex;align-items:center;justify-content:center}
 .rm .ri .ra img{width:100%;height:100%;object-fit:cover;display:block}
-.rm .ri .rad{background:#e5e7eb}
-.rm .ri .rad img{display:block}
+.rm .ri .rad{background:transparent}
 .rm .ri .ri2{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rm .ri .ri2 .rn2{font-weight:600;color:#0a0a0a;font-size:13px;flex-shrink:0}
 .rm .ri .ri2 .rs{display:flex;align-items:center;gap:12px;font-weight:700;color:#0a0a0a;font-size:12px;flex-shrink:0}
 .rm .ri .ri2 .rs span{display:flex;align-items:center;gap:4px}
 .rm .ri .ri2 .rs .i{width:12px;height:12px;filter:brightness(0)saturate(100%)}
-.rm .cb3,.am2 .cb3{margin-top:16px;width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.rm .cb3{margin-top:16px;width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
 .rm .cb3 .i{filter:brightness(0)invert(1)}
-.rm .cb3:hover,.am2 .cb3:hover{background:#222}
-.rm .ls2,.am2 .ls2{text-align:center;padding:30px 0;color:#aaa;display:flex;flex-direction:column;align-items:center;gap:8px}
-.rm .ls2 .i,.am2 .ls2 .i{width:28px;height:28px;filter:grayscale(1) opacity(0.6)}
-.am2 .acn{padding:8px 0}
+.rm .cb3:hover{background:#222}
+.rm .ls2{text-align:center;padding:30px 0;color:#aaa;display:flex;flex-direction:column;align-items:center;gap:8px}
+.rm .ls2 .i{width:28px;height:28px;filter:grayscale(1) opacity(0.6)}
+.am2 .acn{max-height:400px;overflow-y:auto;padding:8px 0}
 .am2 .acn .at2{font-size:16px;font-weight:600;margin-bottom:8px}
 .am2 .acn .ab2{font-size:14px;color:#333;white-space:pre-wrap;word-break:break-word}
+.am2 .cb3{margin-top:16px;width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.am2 .cb3 .i{filter:brightness(0)invert(1)}
+.am2 .cb3:hover{background:#222}
+.am2 .ls2{text-align:center;padding:30px 0;color:#aaa;display:flex;flex-direction:column;align-items:center;gap:8px}
+.am2 .ls2 .i{width:28px;height:28px;filter:grayscale(1) opacity(0.6)}
 input[type="checkbox"]{accent-color:#000}
 .hi{display:none}
 .mw{max-width:400px}
@@ -139,7 +143,7 @@ input[type="checkbox"]{accent-color:#000}
 <script src="/api/toast.js"></script>
 <script>
 async function apiCall(url,method,body){try{const opts={method:method||'GET',headers:{'Content-Type':'application/json'},credentials:'include'};if(body)opts.body=JSON.stringify(body);const res=await fetch(url,opts);return await res.json()}catch(e){return{success:false,error:'网络连接失败，请重试'}}}
-const $=id=>document.getElementById(id),ue=$('profileUsername'),ee=$('profileEmail'),se=$('profileSignature'),ge=$('profileGender'),ce=$('profileCreatedAt'),ac=$('ac'),ai=$('avatarInner'),qs=$('qqStatus'),rd=$('rankDisplay'),pd=$('pointsDisplay'),qb=$('qqBindBtn'),lo=$('logoutBtn'),bb=$('backBtn'),esb=$('editSignatureBtn'),egb=$('editGenderBtn'),cb=$('checkinBtn'),rb=$('rankingBtn'),ab=$('announceBtn'),tb=$('transferBtn'),qm=$('qqModal'),qi=$('qqInput'),qmc=$('qqModalConfirm'),qmc2=$('qqModalCancel'),sm=$('signatureModal'),si=$('signatureInput'),cc=$('charCount'),smc=$('signatureModalConfirm'),smc2=$('signatureModalCancel'),gm=$('genderModal'),go=$('genderOptions'),gmc=$('genderModalConfirm'),gmc2=$('genderModalCancel'),gfh=$('genderFoldHeader'),gfb=$('genderFoldBody'),gfa=$('genderFoldArrow'),rm=$('rankingModal'),rl=$('rankingList'),rcb=$('rankingCloseBtn'),am2=$('announceModal'),acn=$('announceContent'),acb=$('announceCloseBtn'),tm=$('transferModal'),tt=$('transferTarget'),tp=$('transferPoints'),tc=$('transferCancel'),tc2=$('transferConfirm');
+const $=id=>document.getElementById(id),ue=$('profileUsername'),ee=$('profileEmail'),se=$('profileSignature'),ge=$('profileGender'),ce=$('profileCreatedAt'),ac=$('ac'),qs=$('qqStatus'),rd=$('rankDisplay'),pd=$('pointsDisplay'),qb=$('qqBindBtn'),lo=$('logoutBtn'),bb=$('backBtn'),esb=$('editSignatureBtn'),egb=$('editGenderBtn'),cb=$('checkinBtn'),rb=$('rankingBtn'),ab=$('announceBtn'),tb=$('transferBtn'),qm=$('qqModal'),qi=$('qqInput'),qmc=$('qqModalConfirm'),qmc2=$('qqModalCancel'),sm=$('signatureModal'),si=$('signatureInput'),cc=$('charCount'),smc=$('signatureModalConfirm'),smc2=$('signatureModalCancel'),gm=$('genderModal'),go=$('genderOptions'),gmc=$('genderModalConfirm'),gmc2=$('genderModalCancel'),gfh=$('genderFoldHeader'),gfb=$('genderFoldBody'),gfa=$('genderFoldArrow'),rm=$('rankingModal'),rl=$('rankingList'),rcb=$('rankingCloseBtn'),am2=$('announceModal'),acn=$('announceContent'),acb=$('announceCloseBtn'),tm=$('transferModal'),tt=$('transferTarget'),tp=$('transferPoints'),tc=$('transferCancel'),tc2=$('transferConfirm');
 let cq='',cs='',cg='',sg='',fo=false;
 function gc(g){return g=='男'?'#1677ff':g=='女'?'#ff69b4':g=='其他'?'#ffc107':'#888'}
 function ua(q,g){const c=gc(g);ac.style.borderColor=c;ac.classList.remove('da','qa');ac.style.backgroundImage='';ac.style.backgroundColor='';ac.innerHTML='';if(q){ac.classList.add('qa');ac.style.backgroundImage=`url(https://q1.qlogo.cn/g?b=qq&nk=${q}&s=640)`;ac.style.backgroundSize='cover';ac.innerHTML='<img src="/svg/avatar.svg" style="display:none;">'}else{ac.classList.add('da');ac.innerHTML='<img src="/svg/avatar.svg">'}}
@@ -202,7 +206,7 @@ rb.addEventListener('click',async()=>{
             if(item.avatar_url){
                 ah = `<div class="ra" data-username="${item.username}" style="cursor:pointer;"><img src="${item.avatar_url}"></div>`;
             }else{
-                ah = `<div class="ra rad" data-username="${item.username}" style="cursor:pointer;"></div>`;
+                ah = `<div class="ra rad" data-username="${item.username}" style="cursor:pointer;"><img src="/svg/avatar.svg"></div>`;
             }
             html += `<div class="ri">
                 <span class="rn">#${item.rank}</span>
