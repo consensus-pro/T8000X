@@ -16,11 +16,8 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .sp{animation:spn 1.5s linear infinite}
 @keyframes spn{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .as{text-align:center;margin-bottom:20px}
-#ac{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:#e5e7eb;position:relative;transition:border-color .3s;flex-shrink:0}
-#ac .ai{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:transparent}
-#ac .ai img{width:100%;height:100%;object-fit:contain;display:block}
-#ac.qa .ai{background-color:transparent!important;background-repeat:no-repeat;background-position:center;background-size:cover}
-#ac.qa .ai img{display:none}
+#ac{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:transparent!important;position:relative;transition:border-color .3s;flex-shrink:0}
+#ac img{width:100%;height:100%;object-fit:cover;display:block;background:transparent!important}
 .ti{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center;color:#0a0a0a;display:flex;align-items:center;justify-content:center;gap:8px}
 .ib{background:#f8f8f8;border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .ib p{margin:6px 0;font-size:15px;color:#333;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -76,7 +73,7 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .rm .ri:last-child{border-bottom:none}
 .rm .ri .rn{font-weight:700;color:#0a0a0a;min-width:28px;font-size:13px}
 .rm .ri .ra{width:28px;height:28px;border-radius:50%;flex-shrink:0;overflow:hidden;background:#e5e7eb;display:flex;align-items:center;justify-content:center}
-.rm .ri .ra img{width:100%;height:100%;object-fit:contain;display:block}
+.rm .ri .ra img{width:100%;height:100%;object-fit:cover;display:block}
 .rm .ri .rad{background:#e5e7eb}
 .rm .ri .rad img{display:block}
 .rm .ri .ri2{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -103,9 +100,7 @@ input[type="checkbox"]{accent-color:#000}
 <div class="c">
 <div class="as">
 <div id="ac" class="da">
-<div class="ai" id="avatarInner">
   <img src="/svg/avatar.svg">
-</div>
 </div>
 </div>
 <div class="ti"><img src="/svg/user.svg" class="i"> 账号设置</div>
@@ -147,7 +142,7 @@ async function apiCall(url,method,body){try{const opts={method:method||'GET',hea
 const $=id=>document.getElementById(id),ue=$('profileUsername'),ee=$('profileEmail'),se=$('profileSignature'),ge=$('profileGender'),ce=$('profileCreatedAt'),ac=$('ac'),ai=$('avatarInner'),qs=$('qqStatus'),rd=$('rankDisplay'),pd=$('pointsDisplay'),qb=$('qqBindBtn'),lo=$('logoutBtn'),bb=$('backBtn'),esb=$('editSignatureBtn'),egb=$('editGenderBtn'),cb=$('checkinBtn'),rb=$('rankingBtn'),ab=$('announceBtn'),tb=$('transferBtn'),qm=$('qqModal'),qi=$('qqInput'),qmc=$('qqModalConfirm'),qmc2=$('qqModalCancel'),sm=$('signatureModal'),si=$('signatureInput'),cc=$('charCount'),smc=$('signatureModalConfirm'),smc2=$('signatureModalCancel'),gm=$('genderModal'),go=$('genderOptions'),gmc=$('genderModalConfirm'),gmc2=$('genderModalCancel'),gfh=$('genderFoldHeader'),gfb=$('genderFoldBody'),gfa=$('genderFoldArrow'),rm=$('rankingModal'),rl=$('rankingList'),rcb=$('rankingCloseBtn'),am2=$('announceModal'),acn=$('announceContent'),acb=$('announceCloseBtn'),tm=$('transferModal'),tt=$('transferTarget'),tp=$('transferPoints'),tc=$('transferCancel'),tc2=$('transferConfirm');
 let cq='',cs='',cg='',sg='',fo=false;
 function gc(g){return g=='男'?'#1677ff':g=='女'?'#ff69b4':g=='其他'?'#ffc107':'#888'}
-function ua(q,g){const c=gc(g);ac.style.borderColor=c;ac.classList.remove('da','qa');ai.style.backgroundImage='';ai.style.backgroundSize='';ai.style.backgroundColor='';ai.innerHTML='';if(q){ac.classList.add('qa');ai.style.backgroundImage=`url(https://q1.qlogo.cn/g?b=qq&nk=${q}&s=640)`;ai.style.backgroundSize='cover'}else{ac.classList.add('da')}}
+function ua(q,g){const c=gc(g);ac.style.borderColor=c;ac.classList.remove('da','qa');ac.style.backgroundImage='';ac.style.backgroundColor='';ac.innerHTML='';if(q){ac.classList.add('qa');ac.style.backgroundImage=`url(https://q1.qlogo.cn/g?b=qq&nk=${q}&s=640)`;ac.style.backgroundSize='cover';ac.innerHTML='<img src="/svg/avatar.svg" style="display:none;">'}else{ac.classList.add('da');ac.innerHTML='<img src="/svg/avatar.svg">'}}
 function us(t){se.textContent=t;t==='未填写'?se.classList.add('gt'):se.classList.remove('gt')}
 function ug(t){ge.textContent=t;t==='不愿透露'?ge.classList.add('gt'):ge.classList.remove('gt')}
 function ur(r,p){rd.textContent=(p>0&&r)?'#'+r:'未上榜'}
