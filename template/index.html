@@ -58,7 +58,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 .plus-btn:hover{background:#f0f0f0}
 .plus-btn:active{background:#f0f0f0}
 .plus-btn:focus{background:#f0f0f0;outline:none}
-.plus-btn svg{width:24px;height:24px;fill:none;stroke:#333;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.3s ease}
+.plus-btn .plus-icon{width:24px;height:24px;display:block;transition:transform 0.3s ease}
 .plus-btn .plus-icon.rotated{transform:rotate(45deg)}
 .function-panel{background:#fff;border-top:1px solid #e5e5e5;padding:0 16px;max-height:0;overflow:hidden;opacity:0;flex-shrink:0;transition:max-height 0.35s ease, padding 0.35s ease, opacity 0.35s ease;display:flex;gap:8px;justify-content:space-around;flex-wrap:wrap}
 .function-panel.open{max-height:120px;padding:12px 16px;opacity:1}
@@ -116,7 +116,7 @@ html,body{width:100%;height:100%;background:#f8f9fa;overflow:hidden}
 <div class="input-area">
 <textarea id="messageInput" placeholder="输入消息..." maxlength="1000" rows="1"></textarea>
 <button class="plus-btn" id="plusBtn">
-<svg class="plus-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+<img src="/svg/plus.svg" class="plus-icon" alt="展开">
 </button>
 <button class="send-btn" id="sendBtn"><img src="/svg/send.svg" class="icon-sm"> 发送</button>
 </div>
