@@ -26,7 +26,6 @@ body{display:flex;justify-content:center;align-items:center;padding:20px;positio
 #ac .ai img{width:100%;height:100%;object-fit:contain;display:block}
 #ac.qa .ai{background-color:transparent!important;background-repeat:no-repeat;background-position:center;background-size:cover}
 #ac.qa .ai img{display:none}
-/* 已删除 .da 相关样式 */
 .ti{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center;color:#0a0a0a;display:flex;align-items:center;justify-content:center;gap:8px}
 .ib{background:#f8f8f8;border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .ib p{margin:8px 0;font-size:15px;color:#333;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
