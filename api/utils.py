@@ -11,6 +11,12 @@ from psycopg2.extras import RealDictCursor
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
+# ---------- 自定义异常 ----------
+class PoolConnectionError(Exception):
+    """连接池连接无效异常"""
+    pass
+
+# ---------- 连接池（全局单例） ----------
 _db_pool = None
 
 def get_pool():
@@ -28,9 +34,19 @@ def get_pool():
     return _db_pool
 
 def get_db():
-    """请求内缓存连接，一个请求只借一次"""
+    """从池中获取连接，并检测连接是否存活，否则抛出异常"""
     if 'db_conn' not in g:
-        g.db_conn = get_pool().getconn()
+        conn = get_pool().getconn()
+        # closed=0 表示连接正常，非0表示已断开
+        if conn.closed != 0:
+            get_pool().putconn(conn, close=True)
+            raise PoolConnectionError("数据库连接池连接已失效，请刷新重试")
+        g.db_conn = conn
+    else:
+        # 检查缓存的连接
+        if g.db_conn.closed != 0:
+            get_pool().putconn(g.db_conn, close=True)
+            raise PoolConnectionError("数据库连接池连接已失效，请刷新重试")
     return g.db_conn
 
 def return_db_conn():
@@ -39,6 +55,7 @@ def return_db_conn():
     if conn is not None:
         get_pool().putconn(conn)
 
+# ---------- 原有工具函数（不变） ----------
 def generate_code():
     return str(random.randint(100000, 999999))
 
