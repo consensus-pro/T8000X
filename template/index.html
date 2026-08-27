@@ -376,6 +376,7 @@ function renderContent(text) {
     return '<img src="' + u + '" loading="lazy" style="max-width:100%;max-height:250px;border-radius:8px;margin:4px 0;" onerror="this.style.display=\'none\'">';
   }
   var codeBlockRegex = /(```)(\w+)?\n([\s\S]*?)\n\1/g;
+  var result = text;
   var parts = [];
   var lastIndex = 0;
   var match;
@@ -688,8 +689,8 @@ ii.addEventListener('change', function() {
   if (file.size > 200 * 1024) {
     compressImage(file, 800, 0.7).then(function(compressed) {
       doUpload(compressed);
-    }).catch(function(err) {
-      alert('图片压缩失败：' + (err.message || '未知错误'));
+    }).catch(function() {
+      toast.error('图片压缩失败');
       this.value = '';
     }.bind(this));
     return;
@@ -699,7 +700,7 @@ ii.addEventListener('change', function() {
 
 function doUpload(file) {
   if (file.size > 7.5 * 1024 * 1024) {
-    alert('图片不能超过7.5MB');
+    toast.error('图片不能超过7.5MB');
     ii.value = '';
     return;
   }
@@ -714,23 +715,12 @@ function doUpload(file) {
     body: fd,
     credentials: 'include'
   })
-    .then(function(response) {
-      // 先检查响应状态
-      if (!response.ok) {
-        throw new Error('HTTP错误：' + response.status + ' ' + response.statusText);
-      }
-      return response.json();
-    })
+    .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.success) {
-        toast.success('图片已发送');
-      } else {
-        alert('上传失败：' + (data.error || '未知错误'));
-        toast.error(data.error || '上传失败');
-      }
+      if (data.success) toast.success('图片已发送');
+      else toast.error(data.error || '上传失败');
     })
-    .catch(function(err) {
-      alert('上传请求失败：' + (err.message || '请检查网络连接'));
+    .catch(function() {
       toast.error('网络错误，请重试');
     })
     .finally(function() {
