@@ -18,6 +18,7 @@ body{display:flex;justify-content:center;align-items:center;padding:20px;positio
 .ls .lt{font-size:18px;font-weight:700;color:#0a0a0a;letter-spacing:.5px}
 .ls2{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:#aaa;font-size:14px;width:100%;gap:12px}
 .ls2 .i{width:32px;height:32px;filter:brightness(0)saturate(0%)opacity:0.4}
+.tt{font-size:20px;font-weight:700;color:#0a0a0a;letter-spacing:.5px}
 .ts{display:flex;gap:0;margin-bottom:18px;background:#f0f0f0;border-radius:8px;padding:3px}
 .ts a{flex:1;padding:7px 0;text-align:center;background:transparent;color:#888;font-size:13px;font-weight:600;cursor:pointer;border-radius:6px;transition:all .3s ease;text-decoration:none}
 .ts a.ac{background:#0a0a0a;color:#fff}
@@ -188,7 +189,7 @@ input[type="checkbox"]{accent-color:#000}
 .scard .sr2 .bs3{flex-shrink:0;width:44px;height:44px;background:#0a0a0a;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .scard .sr2 .bs3 img{width:20px;height:20px;filter:brightness(0)invert(1)}
 .scard .sr2 .bs3:hover,.scard .sr2 .bs3:active{background:#0a0a0a}
-.ct{width:100%;height:100%;display:flex;flex-direction:column;background:#f8f9fa}
+.ct{width:100%;height:100%;display:flex;flex-direction:column;background:#f8f9fa;overflow:hidden}
 .ms{flex:1;padding:16px 20px;overflow-y:auto;background:#f8f9fa}
 .msg{margin-bottom:12px;display:flex;align-items:flex-start;gap:10px;max-width:100%}
 .msg.sf{flex-direction:row-reverse}
@@ -212,10 +213,8 @@ input[type="checkbox"]{accent-color:#000}
 .ia .sb:hover{background:#222}
 .ia .sb:disabled{opacity:.7;cursor:not-allowed}
 .ia .sb .is{filter:brightness(0)invert(1)}
-.pb{background:#f0f0f0;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;width:44px;padding:0;align-self:flex-end;transition:background 0.2s}
-.pb:hover{background:#f0f0f0}
-.pb:active{background:#f0f0f0}
-.pb:focus{background:#f0f0f0;outline:none}
+.pb{background:#f0f0f0;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;width:44px;padding:0;align-self:flex-end}
+.pb:hover{background:#e0e0e0}
 .pb .pi{width:24px;height:24px;display:block;transition:transform 0.3s ease}
 .pb .pi.rt{transform:rotate(45deg)}
 .fp{background:#fff;border-top:1px solid #e5e5e5;padding:0 16px;max-height:0;overflow:hidden;opacity:0;flex-shrink:0;transition:max-height 0.35s ease, padding 0.35s ease, opacity 0.35s ease;display:flex;gap:8px;justify-content:space-around;flex-wrap:wrap}
@@ -251,4 +250,13 @@ input[type="checkbox"]{accent-color:#000}
 .cb .cb2 code{font-family:inherit;background:transparent;padding:0;white-space:pre;display:block;word-break:normal}
 .cri{width:14px;height:14px;filter:brightness(0)invert(1);vertical-align:middle}
 .cci{width:14px;height:14px;filter:brightness(0)invert(1);vertical-align:middle}
+.hd .lf{display:flex;align-items:center;gap:10px;cursor:pointer}
+.hd .lf .ha{width:36px;height:36px;border-radius:50%;object-fit:cover;display:block;background:#e5e7eb;filter:brightness(0)saturate(0%)opacity:0.6}
+.hd .lf .ha2{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#e5e7eb;border:none;display:block}
+.hd .lf .hu{font-size:16px;font-weight:600;color:#fff}
+.hd .rg{display:flex;align-items:center;gap:12px}
+.hd .rg .bi{background:rgba(255,255,255,0.12);color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:15px;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:4px}
+.hd .rg .bi:hover{background:rgba(255,255,255,0.25)}
+.hd .rg .bi .lb{font-size:13px;font-weight:500}
+.hd .rg .bi .is{filter:brightness(0)invert(1)}
 @media (max-width:640px){.st{grid-template-columns:1fr 1fr}.ui{grid-template-columns:1fr;gap:4px;padding:10px 12px}.ui .bgp{justify-content:flex-start;flex-wrap:wrap}.ui .bs{padding:4px 8px;font-size:11px}.mi .mt{flex-wrap:wrap}.mi .mt .md{margin-left:auto}}
