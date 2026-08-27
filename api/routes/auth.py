@@ -1,13 +1,11 @@
 from flask import Blueprint, request, jsonify, session, render_template, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db, generate_code, is_code_valid, is_valid_email, is_allowed_email
-import time
+from ..utils import get_db, generate_code, is_valid_email, is_allowed_email
 import re
+from datetime import datetime, timezone, timedelta
 
 auth_bp = Blueprint('auth', __name__)
-verification_codes = {}
-code_send_cooldown = {}
 
 @auth_bp.route("/")
 def index():
@@ -42,20 +40,35 @@ def send_code():
 
     conn = get_db()
     cur = conn.cursor()
+
+    cur.execute("DELETE FROM email_verifications WHERE expires_at < NOW() - INTERVAL '1 day'")
+    conn.commit()
+
     cur.execute("SELECT id FROM users WHERE LOWER(email) = %s", (email,))
     existing = cur.fetchone()
     if existing:
         return jsonify({"success": False, "error": "该邮箱已被注册"}), 400
 
-    last_send = code_send_cooldown.get(email, 0)
-    if time.time() - last_send < 60:
-        remaining = int(60 - (time.time() - last_send))
-        return jsonify({"success": False, "error": f"请等待 {remaining} 秒后再试"}), 429
+    cur.execute(
+        "SELECT 1 FROM email_verifications WHERE email = %s AND created_at > NOW() - INTERVAL '60 seconds'",
+        (email,)
+    )
+    if cur.fetchone():
+        return jsonify({"success": False, "error": "请等待 60 秒后再试"}), 429
 
     code = generate_code()
-    expires = time.time() + 5 * 60
-    verification_codes[email] = {"code": code, "expires": expires}
-    code_send_cooldown[email] = time.time()
+    expires_at = datetime.now(timezone(timedelta(hours=8))) + timedelta(minutes=10)
+
+    cur.execute(
+        """
+        INSERT INTO email_verifications (email, code, created_at, expires_at)
+        VALUES (%s, %s, NOW(), %s)
+        ON CONFLICT (email) 
+        DO UPDATE SET code = %s, created_at = NOW(), expires_at = %s
+        """,
+        (email, code, expires_at, code, expires_at)
+    )
+    conn.commit()
 
     try:
         import resend
@@ -64,7 +77,7 @@ def send_code():
                 "from": "T8000X网络 <noreply@t8000x.top>",
                 "to": email,
                 "subject": "注册验证码",
-                "html": f"<p>您的验证码是：<strong>{code}</strong>，有效期5分钟。</p>"
+                "html": f"<p>您的验证码是：<strong>{code}</strong>，有效期10分钟。</p>"
             }
         )
         return jsonify({"success": True, "message": "验证码已发送"})
@@ -86,9 +99,6 @@ def register():
     if not is_valid_email(email):
         return jsonify({"success": False, "error": "邮箱格式错误"}), 400
 
-    if not is_code_valid(verification_codes, email, code):
-        return jsonify({"success": False, "error": "验证码错误"}), 400
-
     try:
         if not is_allowed_email(email):
             return jsonify({"success": False, "error": "请使用正规邮箱注册"}), 400
@@ -100,15 +110,23 @@ def register():
 
     conn = get_db()
     cur = conn.cursor()
+
+    cur.execute(
+        "SELECT code FROM email_verifications WHERE email = %s AND expires_at > NOW()",
+        (email,)
+    )
+    row = cur.fetchone()
+    if not row or row[0] != code:
+        return jsonify({"success": False, "error": "验证码错误或已过期"}), 400
+
+    cur.execute("DELETE FROM email_verifications WHERE email = %s", (email,))
+    conn.commit()
+
     cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-    existing = cur.fetchone()
-    if existing:
+    if cur.fetchone():
         return jsonify({"success": False, "error": "账号已存在"}), 400
 
     password_hash = generate_password_hash(password)
-    conn = get_db()
-    cur = conn.cursor()
-
     try:
         cur.execute(
             "INSERT INTO users (username, password_hash, email, created_at) VALUES (%s, %s, %s, NOW())",
@@ -129,7 +147,6 @@ def register():
         else:
             return jsonify({"success": False, "error": "注册失败，请重试"}), 400
 
-    verification_codes.pop(email, None)
     return jsonify({"success": True, "message": "注册成功"})
 
 @auth_bp.route("/api/login", methods=["POST"])
