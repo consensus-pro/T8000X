@@ -34,19 +34,27 @@ def get_pool():
     return _db_pool
 
 def get_db():
-    """从池中获取连接，并检测连接是否存活，否则抛出异常"""
+    """从池中获取连接，并通过心跳检测确保连接存活"""
     if 'db_conn' not in g:
         conn = get_pool().getconn()
-        # closed=0 表示连接正常，非0表示已断开
-        if conn.closed != 0:
+        try:
+            # 心跳检测：执行极简查询验证连接是否有效
+            with conn.cursor() as cur:
+                cur.execute('SELECT 1')
+        except Exception:
+            # 连接已失效，销毁并抛出异常
             get_pool().putconn(conn, close=True)
-            raise PoolConnectionError("数据库连接池连接已失效，请刷新重试")
+            raise PoolConnectionError("数据库连接已失效，请刷新重试")
         g.db_conn = conn
     else:
-        # 检查缓存的连接
-        if g.db_conn.closed != 0:
+        # 检查缓存的连接是否依然存活（避免在请求过程中被服务端断开）
+        try:
+            with g.db_conn.cursor() as cur:
+                cur.execute('SELECT 1')
+        except Exception:
+            # 缓存连接失效，销毁并抛出异常
             get_pool().putconn(g.db_conn, close=True)
-            raise PoolConnectionError("数据库连接池连接已失效，请刷新重试")
+            raise PoolConnectionError("数据库连接已失效，请刷新重试")
     return g.db_conn
 
 def return_db_conn():
@@ -55,7 +63,7 @@ def return_db_conn():
     if conn is not None:
         get_pool().putconn(conn)
 
-# ---------- 原有工具函数（不变） ----------
+# ---------- 原有工具函数（完全不变） ----------
 def generate_code():
     return str(random.randint(100000, 999999))
 
