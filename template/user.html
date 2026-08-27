@@ -4,7 +4,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>T8000X - 用户主页</title>
-<link rel="stylesheet" href="/template/style.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:rgba(0,0,0,0)}
+html,body{width:100%;min-height:100vh;background:#fff}
+body{display:flex;justify-content:center;align-items:center;padding:20px;position:relative}
+.bg{position:fixed;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,0,0,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03)1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+.c{width:100%;max-width:380px;position:relative;z-index:1;min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.i{width:16px;height:16px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.is{width:14px;height:14px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.ig{filter:brightness(0)saturate(0%)opacity(0.6);width:16px;height:16px}
+.sp{animation:spn 1.5s linear infinite;display:inline-block}
+@keyframes spn{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.hi{display:none !important}
+.gt{color:#999 !important;font-weight:400 !important}
+.ls2{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:#aaa;font-size:14px;width:100%;gap:12px}
+.ls2 .i{width:32px;height:32px;filter:brightness(0)saturate(0%)opacity:0.4}
+.pc{width:100%}
+.as{text-align:center;margin-bottom:20px}
+#ac{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:transparent;position:relative;transition:border-color .3s ease;flex-shrink:0}
+#ac img{width:100%;height:100%;object-fit:cover;display:block}
+#ac.qa{background-size:cover;background-repeat:no-repeat;background-position:center}
+#ac.qa img{display:none}
+.ti{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center;color:#0a0a0a;display:flex;align-items:center;justify-content:center;gap:8px}
+.ib{background:#f8f8f8;border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.ib p{margin:8px 0;font-size:15px;color:#333;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ib p .i{opacity:.6;flex-shrink:0}
+.ib span{color:#0a0a0a;font-weight:600}
+.sb{background:#f8f8f8;border-radius:10px;padding:12px 20px;margin-bottom:16px;display:flex;justify-content:space-between;width:100%}
+.sb .si{text-align:center;flex:1}
+.sb .si .nu{font-size:14px;font-weight:700;color:#0a0a0a}
+.sb .si .lb{font-size:14px;color:#0a0a0a;font-weight:600;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px}
+.bb2,.eb{background:#0a0a0a;color:#fff;border:none;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.bb2{width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:700}
+.bb2 .i{filter:brightness(0)invert(1)}
+.eb{padding:10px 28px;border-radius:8px;font-size:14px}
+.eb .i{filter:brightness(0)invert(1)}
+.bb2:hover,.bb2:active,.eb:hover,.eb:active{background:#0a0a0a}
+#ec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center;width:100%;min-height:280px;gap:16px}
+#ec .ei{width:72px;height:72px;filter:brightness(0)saturate(100%)}
+#ec .et{font-size:20px;font-weight:700;color:#333}
+.scard{background:#fff;border-radius:16px;padding:30px 24px;width:100%;max-width:340px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
+.scard .sh{margin-bottom:16px}
+.scard .sh h3{font-size:18px;font-weight:600;color:#0a0a0a;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.scard .sh .ss{font-size:13px;color:#888}
+.scard .sr2{display:flex;gap:8px;align-items:center}
+.scard .sr2 .ib2{flex:1;position:relative}
+.scard .sr2 .ib2 input{width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none;font-family:inherit;background:#fff;height:44px}
+.scard .sr2 .ib2 input:focus{border-color:#0a0a0a}
+.scard .sr2 .bs3{flex-shrink:0;width:44px;height:44px;background:#0a0a0a;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.scard .sr2 .bs3 img{width:20px;height:20px;filter:brightness(0)invert(1)}
+.scard .sr2 .bs3:hover,.scard .sr2 .bs3:active{background:#0a0a0a}
+</style>
 </head>
 <body>
 <div class="bg"></div>
