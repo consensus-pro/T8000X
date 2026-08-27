@@ -1,6 +1,7 @@
 from . import create_app
 from flask import send_from_directory, request
 import os
+from .utils import return_db_conn
 
 app = create_app()
 
@@ -23,6 +24,10 @@ def after_request(response):
         from .utils import update_page_view
         update_page_view(request.path)
     return response
+
+@app.teardown_appcontext
+def close_db_conn(exception=None):
+    return_db_conn()
 
 if __name__ == "__main__":
     app.run(debug=True)

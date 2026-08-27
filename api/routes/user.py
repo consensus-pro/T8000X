@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, render_template
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db_connection
+from ..utils import get_db
 from datetime import timedelta
 
 user_bp = Blueprint('user', __name__)
@@ -20,7 +20,7 @@ def get_user():
     else:
         username = target_username
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
@@ -33,9 +33,6 @@ def get_user():
         WHERE u.username = %s
     """, (username,))
     user = cur.fetchone()
-
-    cur.close()
-    conn.close()
 
     if not user:
         return jsonify({"success": False, "error": "用户不存在"}), 404

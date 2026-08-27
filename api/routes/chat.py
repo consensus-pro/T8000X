@@ -1,12 +1,10 @@
 from flask import Blueprint, request, jsonify, session, render_template, redirect
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db_connection
+from ..utils import get_db
 import html
 import pusher
 import os
-import base64
 import requests
-from werkzeug.utils import secure_filename
 import oss2
 import uuid
 
@@ -39,7 +37,7 @@ def get_messages():
     if offset < 0:
         offset = 0
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
         SELECT m.username, m.content, m.created_at, u.qq_number
@@ -50,8 +48,6 @@ def get_messages():
     """, (limit, offset))
     messages = cur.fetchall()
     messages.reverse()
-    cur.close()
-    conn.close()
 
     for msg in messages:
         if msg.get("qq_number"):
@@ -73,7 +69,7 @@ def send_message():
     if len(content) > 500:
         return jsonify({"success": False, "error": "消息太长"}), 400
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("""
         UPDATE users 
@@ -82,21 +78,15 @@ def send_message():
           AND (last_message_time IS NULL OR last_message_time < NOW() - INTERVAL '1 second')
     """, (username,))
     if cur.rowcount == 0:
-        cur.close()
-        conn.close()
         return jsonify({"success": False, "error": "发送过于频繁"}), 429
     conn.commit()
-    cur.close()
-    conn.close()
 
     content = html.escape(content)
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT qq_number FROM users WHERE username = %s", (username,))
     user = cur.fetchone()
     if not user:
-        cur.close()
-        conn.close()
         session.pop("username", None)
         return jsonify({"success": False, "error": "用户不存在，请重新登录"}), 401
 
@@ -110,8 +100,6 @@ def send_message():
     )
     inserted_id = cur.fetchone()["id"]
     conn.commit()
-    cur.close()
-    conn.close()
 
     try:
         pusher_client.trigger("chat", "new-message", {
@@ -176,7 +164,7 @@ def upload_image():
 
     img_markdown = f"![图片]({image_url})"
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("""
         UPDATE users 
@@ -185,20 +173,14 @@ def upload_image():
           AND (last_message_time IS NULL OR last_message_time < NOW() - INTERVAL '1 second')
     """, (username,))
     if cur.rowcount == 0:
-        cur.close()
-        conn.close()
         return jsonify({"success": False, "error": "发送过于频繁"}), 429
     conn.commit()
-    cur.close()
-    conn.close()
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT qq_number FROM users WHERE username = %s", (username,))
     user = cur.fetchone()
     if not user:
-        cur.close()
-        conn.close()
         session.pop("username", None)
         return jsonify({"success": False, "error": "用户不存在"}), 401
 
@@ -212,8 +194,6 @@ def upload_image():
     )
     msg_id = cur.fetchone()["id"]
     conn.commit()
-    cur.close()
-    conn.close()
 
     try:
         pusher_client.trigger("chat", "new-message", {

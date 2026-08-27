@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, render_template, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db_connection, generate_code, is_code_valid, is_valid_email, is_allowed_email
+from ..utils import get_db, generate_code, is_code_valid, is_valid_email, is_allowed_email
 import time
 import re
 
@@ -40,12 +40,10 @@ def send_code():
     except Exception as e:
         return jsonify({"success": False, "error": "检测器加载失败"}), 500
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE LOWER(email) = %s", (email,))
     existing = cur.fetchone()
-    cur.close()
-    conn.close()
     if existing:
         return jsonify({"success": False, "error": "该邮箱已被注册"}), 400
 
@@ -100,19 +98,15 @@ def register():
     if not re.match(r'^[\u4e00-\u9fa5a-zA-Z0-9]+$', username):
         return jsonify({"success": False, "error": "用户名只能包含中文、字母、数字"}), 400
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE username = %s", (username,))
     existing = cur.fetchone()
     if existing:
-        cur.close()
-        conn.close()
         return jsonify({"success": False, "error": "账号已存在"}), 400
-    cur.close()
-    conn.close()
 
     password_hash = generate_password_hash(password)
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
 
     try:
@@ -134,9 +128,6 @@ def register():
             return jsonify({"success": False, "error": "该邮箱已被注册"}), 400
         else:
             return jsonify({"success": False, "error": "注册失败，请重试"}), 400
-    finally:
-        cur.close()
-        conn.close()
 
     verification_codes.pop(email, None)
     return jsonify({"success": True, "message": "注册成功"})
@@ -150,12 +141,10 @@ def login():
     if not username or not password:
         return jsonify({"success": False, "error": "账号或密码未填"}), 400
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cur.fetchone()
-    cur.close()
-    conn.close()
 
     if not user:
         return jsonify({"success": False, "error": "账号或密码错误"}), 401
