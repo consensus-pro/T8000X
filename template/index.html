@@ -688,8 +688,8 @@ ii.addEventListener('change', function() {
   if (file.size > 200 * 1024) {
     compressImage(file, 800, 0.7).then(function(compressed) {
       doUpload(compressed);
-    }).catch(function() {
-      toast.error('图片压缩失败');
+    }).catch(function(err) {
+      alert('图片压缩失败：' + (err.message || '未知错误'));
       this.value = '';
     }.bind(this));
     return;
@@ -699,7 +699,7 @@ ii.addEventListener('change', function() {
 
 function doUpload(file) {
   if (file.size > 7.5 * 1024 * 1024) {
-    toast.error('图片不能超过7.5MB');
+    alert('图片不能超过7.5MB');
     ii.value = '';
     return;
   }
@@ -714,7 +714,13 @@ function doUpload(file) {
     body: fd,
     credentials: 'include'
   })
-    .then(function(r) { return r.json(); })
+    .then(function(response) {
+      // 先检查响应状态
+      if (!response.ok) {
+        throw new Error('HTTP错误：' + response.status + ' ' + response.statusText);
+      }
+      return response.json();
+    })
     .then(function(data) {
       if (data.success) {
         toast.success('图片已发送');
@@ -724,7 +730,7 @@ function doUpload(file) {
       }
     })
     .catch(function(err) {
-      alert('网络错误：' + (err.message || '请检查网络连接'));
+      alert('上传请求失败：' + (err.message || '请检查网络连接'));
       toast.error('网络错误，请重试');
     })
     .finally(function() {
