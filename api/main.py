@@ -10,11 +10,6 @@ def serve_svg(filename):
     svg_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'svg')
     return send_from_directory(svg_dir, filename)
 
-@app.route('/template/style.css')
-def serve_css():
-    template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'template')
-    return send_from_directory(template_dir, 'style.css')
-
 @app.route('/api/toast.js')
 def serve_toast_js():
     return send_from_directory(os.path.dirname(__file__), 'toast.js')
