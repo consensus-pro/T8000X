@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, render_template
 from werkzeug.security import generate_password_hash
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db
+from ..utils import get_db_connection
 from datetime import timedelta, datetime, timezone
 import random
 
@@ -24,10 +24,12 @@ def update_signature():
     if len(signature) > 20:
         return jsonify({"success": False, "error": "签名不能超过20字"}), 400
 
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("UPDATE users SET signature = %s WHERE username = %s", (signature, username))
     conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"success": True, "message": "签名已修改", "signature": signature})
 
 @profile_bp.route("/api/update-gender", methods=["POST"])
@@ -44,10 +46,12 @@ def update_gender():
     if gender == "不愿透露":
         gender = None
 
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("UPDATE users SET gender = %s WHERE username = %s", (gender, username))
     conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"success": True, "message": "性别修改成功", "gender": gender or "不愿透露"})
 
 @profile_bp.route("/api/bind-qq", methods=["POST"])
@@ -63,10 +67,12 @@ def bind_qq():
     if not qq_number.isdigit() or len(qq_number) < 5 or len(qq_number) > 11:
         return jsonify({"success": False, "error": "请输入正确的QQ号"}), 400
 
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("UPDATE users SET qq_number = %s WHERE username = %s", (qq_number, username))
     conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"success": True, "message": "QQ绑定成功"})
 
 @profile_bp.route("/api/checkin", methods=["POST"])
@@ -75,11 +81,13 @@ def checkin():
     if not username:
         return jsonify({"success": False, "error": "未登录"}), 401
 
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT id FROM users WHERE username = %s", (username,))
     user = cur.fetchone()
     if not user:
+        cur.close()
+        conn.close()
         session.pop("username", None)
         return jsonify({"success": False, "error": "用户不存在"}), 401
 
@@ -90,6 +98,8 @@ def checkin():
     stats = cur.fetchone()
 
     if stats and stats["last_checkin_date"] == today:
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "error": "今日已签到"}), 400
 
     points = random.randint(-50, 200)
@@ -107,11 +117,13 @@ def checkin():
             (user_id, new_total, new_days, today)
         )
     conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"success": True, "message": f"签到成功，获得{points}积分", "points": points, "total": new_total})
 
 @profile_bp.route("/api/ranking", methods=["GET"])
 def get_ranking():
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
         SELECT u.username, u.qq_number, s.total_points, s.checkin_days,
@@ -123,6 +135,8 @@ def get_ranking():
         LIMIT 100
     """)
     ranking = cur.fetchall()
+    cur.close()
+    conn.close()
 
     for item in ranking:
         if item.get("qq_number"):
@@ -152,19 +166,25 @@ def transfer_points():
     if points <= 0:
         return jsonify({"success": False, "error": "积分必须大于0"}), 400
 
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("SELECT id FROM users WHERE username = %s", (target,))
     target_user = cur.fetchone()
     if not target_user:
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "error": "用户不存在"}), 404
 
     cur.execute("SELECT total_points FROM user_stats WHERE user_id = (SELECT id FROM users WHERE username = %s)", (username,))
     sender_stats = cur.fetchone()
     if not sender_stats:
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "error": "您没有积分记录"}), 400
     if sender_stats["total_points"] < points:
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "error": "积分不足"}), 400
 
     try:
@@ -173,16 +193,22 @@ def transfer_points():
         conn.commit()
     except Exception as e:
         conn.rollback()
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "error": "转账失败"}), 500
 
+    cur.close()
+    conn.close()
     return jsonify({"success": True, "message": "转账成功"})
 
 @profile_bp.route("/api/announcement", methods=["GET"])
 def get_announcement():
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT title, content, is_active, updated_at FROM announcement WHERE id = 1")
     row = cur.fetchone()
+    cur.close()
+    conn.close()
     if not row:
         return jsonify({"success": False, "error": "公告不存在"}), 404
     return jsonify({
@@ -207,11 +233,13 @@ def admin_update_announcement():
     if not title or not content:
         return jsonify({"success": False, "error": "标题和内容不能为空"}), 400
 
-    conn = get_db()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
         "UPDATE announcement SET title = %s, content = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
         (title, content, is_active)
     )
     conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"success": True, "message": "公告已修改"})
