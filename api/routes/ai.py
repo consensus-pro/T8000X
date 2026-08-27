@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db_connection
+from ..utils import get_db
 import os
 import time
 import requests
@@ -16,42 +16,35 @@ AI_MODEL = "deepseek-chat"
 AI_TIMEOUT = 60
 AI_MAX_HISTORY = 10
 
-# 全局最后调用时间锁
 _last_ai_call_time = 0
 
 def ai_get_history(username, limit=AI_MAX_HISTORY):
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute(
         "SELECT role, content FROM ai_conversations WHERE username = %s ORDER BY created_at DESC LIMIT %s",
         (username, limit)
     )
     rows = cur.fetchall()
-    cur.close()
-    conn.close()
     return list(reversed(rows))
 
 def ai_save_conversation(username, role, content):
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute(
         "INSERT INTO ai_conversations (username, role, content) VALUES (%s, %s, %s)",
         (username, role, content)
     )
     conn.commit()
-    cur.close()
-    conn.close()
 
 def ai_clean_old_history(username, keep=AI_MAX_HISTORY):
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute(
         "DELETE FROM ai_conversations WHERE username = %s AND id NOT IN (SELECT id FROM ai_conversations WHERE username = %s ORDER BY created_at DESC LIMIT %s)",
         (username, username, keep)
     )
     conn.commit()
-    cur.close()
-    conn.close()
 
 def ai_call_deepseek(messages):
     headers = {
@@ -108,7 +101,7 @@ def ai_ask():
     global _last_ai_call_time
     now = time.time()
     if now - _last_ai_call_time < 3:
-        return jsonify({"success": False, "error": "AI 正在思考中，请稍后再试"}), 429
+        return jsonify({"success": False, "error": "AI 思考中，请稍后再试"}), 429
     _last_ai_call_time = now
 
     data = request.get_json()
@@ -124,7 +117,7 @@ def ai_ask():
     if reply is None:
         return jsonify({"success": False, "error": "请求被忽略"}), 400
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT qq_number FROM users WHERE username = %s", (JISHI_USERNAME,))
     jishi = cur.fetchone()
@@ -138,8 +131,6 @@ def ai_ask():
     )
     msg_id = cur.fetchone()["id"]
     conn.commit()
-    cur.close()
-    conn.close()
 
     try:
         import pusher

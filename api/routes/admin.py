@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session, render_template, redirect
 from werkzeug.security import generate_password_hash
 from psycopg2.extras import RealDictCursor
-from ..utils import get_db_connection
+from ..utils import get_db
 from datetime import timedelta
 import time
 import os
@@ -59,12 +59,10 @@ def admin_get_users():
     if not admin_username:
         return jsonify({"success": False, "error": "未登录"}), 401
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT id, username, email, created_at FROM users ORDER BY id DESC")
     users = cur.fetchall()
-    cur.close()
-    conn.close()
 
     for user in users:
         if user.get("created_at"):
@@ -77,19 +75,15 @@ def admin_delete_user(user_id):
     if not admin_username:
         return jsonify({"success": False, "error": "未登录"}), 401
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
     if not cur.fetchone():
-        cur.close()
-        conn.close()
         return jsonify({"success": False, "error": "用户不存在"}), 404
 
     cur.execute("DELETE FROM user_stats WHERE user_id = %s", (user_id,))
     cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
     conn.commit()
-    cur.close()
-    conn.close()
     return jsonify({"success": True, "message": "用户已删除"})
 
 @admin_bp.route("/api/admin/users/<int:user_id>/reset-password", methods=["POST"])
@@ -103,19 +97,15 @@ def admin_reset_password(user_id):
     if len(new_password) < 6:
         return jsonify({"success": False, "error": "密码至少6位"}), 400
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
     if not cur.fetchone():
-        cur.close()
-        conn.close()
         return jsonify({"success": False, "error": "用户不存在"}), 404
 
     password_hash = generate_password_hash(new_password)
     cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
     conn.commit()
-    cur.close()
-    conn.close()
     return jsonify({"success": True, "message": "密码已修改"})
 
 @admin_bp.route("/api/admin/users/<int:user_id>/update-points", methods=["POST"])
@@ -134,20 +124,16 @@ def admin_update_points(user_id):
     except ValueError:
         return jsonify({"success": False, "error": "积分必须是整数"}), 400
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
     if not cur.fetchone():
-        cur.close()
-        conn.close()
         return jsonify({"success": False, "error": "用户不存在"}), 404
 
     cur.execute("UPDATE user_stats SET total_points = %s WHERE user_id = %s", (points, user_id))
     if cur.rowcount == 0:
         cur.execute("INSERT INTO user_stats (user_id, total_points, checkin_days) VALUES (%s, %s, 0)", (user_id, points))
     conn.commit()
-    cur.close()
-    conn.close()
     return jsonify({"success": True, "message": "积分已修改"})
 
 @admin_bp.route("/api/admin/messages", methods=["GET"])
@@ -156,12 +142,10 @@ def admin_get_messages():
     if not admin_username:
         return jsonify({"success": False, "error": "未登录"}), 401
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT id, username, content, created_at FROM messages ORDER BY created_at DESC")
     messages = cur.fetchall()
-    cur.close()
-    conn.close()
 
     for msg in messages:
         if msg.get("created_at"):
@@ -174,12 +158,10 @@ def admin_delete_message(msg_id):
     if not admin_username:
         return jsonify({"success": False, "error": "未登录"}), 401
 
-    conn = get_db_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM messages WHERE id = %s", (msg_id,))
     conn.commit()
-    cur.close()
-    conn.close()
     return jsonify({"success": True, "message": "消息已删除"})
 
 @admin_bp.route("/api/admin/page-views", methods=["GET"])
