@@ -7,6 +7,7 @@ import os
 import requests
 import oss2
 import uuid
+import logging
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -145,8 +146,20 @@ def upload_image():
     OSS_BUCKET_NAME = os.environ.get("OSS_BUCKET_NAME")
     OSS_BASE_URL = os.environ.get("OSS_BASE_URL")
 
-    if not all([OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET, OSS_ENDPOINT, OSS_BUCKET_NAME]):
-        return jsonify({"success": False, "error": "OSS配置未完整"}), 500
+    # 检查必需的环境变量
+    missing = []
+    if not OSS_ACCESS_KEY_ID:
+        missing.append("OSS_ACCESS_KEY_ID")
+    if not OSS_ACCESS_KEY_SECRET:
+        missing.append("OSS_ACCESS_KEY_SECRET")
+    if not OSS_ENDPOINT:
+        missing.append("OSS_ENDPOINT")
+    if not OSS_BUCKET_NAME:
+        missing.append("OSS_BUCKET_NAME")
+    if missing:
+        error_msg = f"OSS配置缺失: {', '.join(missing)}"
+        logging.error(error_msg)
+        return jsonify({"success": False, "error": error_msg}), 500
 
     try:
         auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
@@ -154,13 +167,25 @@ def upload_image():
         file_bytes = file.read()
         ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
         new_filename = f"{uuid.uuid4().hex}.{ext}"
-        bucket.put_object(new_filename, file_bytes)
+        # 尝试上传
+        result = bucket.put_object(new_filename, file_bytes)
+        # 检查上传状态（oss2 返回的 result 有 status 属性）
+        if result.status != 200:
+            error_msg = f"OSS上传失败，状态码: {result.status}"
+            logging.error(error_msg)
+            return jsonify({"success": False, "error": error_msg}), 500
         if OSS_BASE_URL:
             image_url = f"{OSS_BASE_URL.rstrip('/')}/{new_filename}"
         else:
             image_url = f"https://{OSS_BUCKET_NAME}.{OSS_ENDPOINT}/{new_filename}"
+    except oss2.exceptions.OssError as e:
+        error_msg = f"OSS错误: {e.message}"
+        logging.error(error_msg)
+        return jsonify({"success": False, "error": error_msg}), 500
     except Exception as e:
-        return jsonify({"success": False, "error": f"OSS上传失败: {str(e)}"}), 500
+        error_msg = f"上传异常: {str(e)}"
+        logging.error(error_msg)
+        return jsonify({"success": False, "error": error_msg}), 500
 
     img_markdown = f"![图片]({image_url})"
 

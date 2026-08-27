@@ -1,7 +1,6 @@
 from . import create_app
 from flask import send_from_directory, request
 import os
-from .utils import return_db_conn
 
 app = create_app()
 
@@ -25,9 +24,7 @@ def after_request(response):
         update_page_view(request.path)
     return response
 
-@app.teardown_appcontext
-def close_db_conn(exception=None):
-    return_db_conn()
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    # 生产环境应设置环境变量 FLASK_DEBUG=0 或直接设为 False
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(debug=debug_mode)
