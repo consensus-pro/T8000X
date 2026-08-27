@@ -29,10 +29,20 @@ def admin_login():
         return jsonify({"success": False, "error": "账号和密码必填"}), 400
 
     now = time.time()
-    if username in admin_login_attempts:
-        record = admin_login_attempts[username]
-        if record.get("permanent_locked"):
-            return jsonify({"success": False, "error": "该账号已被永久锁定，请联系管理员"}), 403
+    record = admin_login_attempts.get(username)
+
+    # 检查是否被锁定且未过期
+    if record:
+        locked_until = record.get("locked_until")
+        if locked_until and locked_until > now:
+            remaining = int(locked_until - now)
+            minutes = remaining // 60
+            seconds = remaining % 60
+            return jsonify({"success": False, "error": f"该账号已被锁定{minutes:02d}分{seconds:02d}秒"}), 403
+        elif locked_until and locked_until <= now:
+            # 锁定已过期，清除记录
+            admin_login_attempts.pop(username, None)
+            record = None
 
     admin_user = os.environ.get("ADMIN_ACCOUNT")
     admin_pass = os.environ.get("ADMIN_PASSWORD")
@@ -42,14 +52,15 @@ def admin_login():
         session["admin"] = username
         return jsonify({"success": True, "message": "登录成功 账号密码有效"})
     else:
-        record = admin_login_attempts.get(username, {"count": 0, "permanent_locked": False})
+        if record is None:
+            record = {"count": 0, "locked_until": None}
         record["count"] += 1
-        if record["count"] >= 10:
-            record["permanent_locked"] = True
+        if record["count"] >= 5:
+            record["locked_until"] = now + 15 * 60
             admin_login_attempts[username] = record
-            return jsonify({"success": False, "error": "该账号已被永久锁定，请联系管理员"}), 403
+            return jsonify({"success": False, "error": "该账号已被锁定15分00秒"}), 403
         else:
-            remaining_attempts = 10 - record["count"]
+            remaining_attempts = 5 - record["count"]
             admin_login_attempts[username] = record
             return jsonify({"success": False, "error": f"账号或密码错误 你还可再试 {remaining_attempts} 次"}), 401
 

@@ -16,7 +16,7 @@ AI_MODEL = "deepseek-chat"
 AI_TIMEOUT = 60
 AI_MAX_HISTORY = 10
 
-_last_ai_call_time = 0
+_last_ai_call_per_user = {}
 
 def ai_get_history(username, limit=AI_MAX_HISTORY):
     conn = get_db()
@@ -98,12 +98,8 @@ def ai_handle_request(username, question):
 
 @ai_bp.route("/api/ai-ask", methods=["POST"])
 def ai_ask():
-    global _last_ai_call_time
-    now = time.time()
-    if now - _last_ai_call_time < 3:
-        return jsonify({"success": False, "error": "AI 正在思考中，请稍后再试"}), 429
-    _last_ai_call_time = now
-
+    global _last_ai_call_per_user
+    
     data = request.get_json()
     username = data.get("username")
     question = data.get("question")
@@ -112,6 +108,19 @@ def ai_ask():
 
     if username == JISHI_USERNAME:
         return jsonify({"success": False, "error": "身份冲突"}), 400
+
+    # 清理超过1小时未活动的用户记录（防止内存泄漏）
+    now = time.time()
+    expired_users = [u for u, t in _last_ai_call_per_user.items() if now - t > 3600]
+    for u in expired_users:
+        _last_ai_call_per_user.pop(u, None)
+
+    # 按用户限流：每个用户3秒内只能调用一次
+    last_call = _last_ai_call_per_user.get(username, 0)
+    if now - last_call < 3:
+        remaining = int(3 - (now - last_call))
+        return jsonify({"success": False, "error": f"AI 正在思考中，请 {remaining} 秒后再试"}), 429
+    _last_ai_call_per_user[username] = now
 
     reply = ai_handle_request(username, question)
     if reply is None:

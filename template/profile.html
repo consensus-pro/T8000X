@@ -12,14 +12,12 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .i,.is,.im,.ig{display:inline-block;vertical-align:middle;flex-shrink:0;width:16px;height:16px;filter:brightness(0)saturate(100%)}
 .is{width:14px;height:14px}
 .im{width:18px;height:18px}
-.ig{filter:brightness(0)saturate(0%)opacity(0.6)}
+.ig{filter:brightness(0)saturate(0%)opacity:0.6}
 .sp{animation:spn 1.5s linear infinite}
 @keyframes spn{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .as{text-align:center;margin-bottom:20px}
 #ac{display:inline-block;width:80px;height:80px;border-radius:50%;border:3px solid #0a0a0a;overflow:hidden;background:transparent;position:relative;transition:border-color .3s;flex-shrink:0}
 #ac img{width:100%;height:100%;object-fit:cover;display:block}
-#ac.qa{background-size:cover;background-repeat:no-repeat;background-position:center}
-#ac.qa img{display:none}
 .ti{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center;color:#0a0a0a;display:flex;align-items:center;justify-content:center;gap:8px}
 .ib{background:#f8f8f8;border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .ib p{margin:6px 0;font-size:15px;color:#333;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -158,7 +156,7 @@ toast.success('账号数据已加载');
 si.addEventListener('input',function(){cc.textContent=this.value.length});
 esb.addEventListener('click',()=>{si.value=cs==='未填写'?'':cs;cc.textContent=si.value.length;sm.classList.add('ac')});
 smc2.addEventListener('click',()=>sm.classList.remove('ac'));
-smc.addEventListener('click',async()=>{let s=si.value.trim();if(!s)s='未填写';const r=await apiCall('/api/update-signature','POST',{signature:s});if(r.success){toast.success('签名修改成功！');cs=r.signature;us(cs);sm.classList.remove('ac')}else{toast.error(r.error||'修改失败')}});
+smc.addEventListener('click',async()=>{let s=si.value.trim();if(!s)s='未填写';const r=await apiCall('/api/update-signature','POST',{signature:s});if(r.success){toast.success(r.message);cs=r.signature;us(cs);sm.classList.remove('ac')}else{toast.error(r.error||'修改失败')}});
 sm.addEventListener('click',e=>{if(e.target===sm)sm.classList.remove('ac')});
 gfh.addEventListener('click',()=>{
     fo=!fo;
@@ -188,11 +186,11 @@ egb.addEventListener('click',()=>{
     gm.classList.add('ac')
 });
 gmc2.addEventListener('click',()=>gm.classList.remove('ac'));
-gmc.addEventListener('click',async()=>{const sel=document.querySelector('.go2.sel');if(!sel){toast.error('请先展开并选择性别');return}const g=sel.dataset.value;const r=await apiCall('/api/update-gender','POST',{gender:g});if(r.success){toast.success('性别修改成功！');cg=r.gender;ug(cg);ua(cq,cg);gm.classList.remove('ac')}else{toast.error(r.error||'修改失败')}});
+gmc.addEventListener('click',async()=>{const sel=document.querySelector('.go2.sel');if(!sel){toast.error('请先展开并选择性别');return}const g=sel.dataset.value;const r=await apiCall('/api/update-gender','POST',{gender:g});if(r.success){toast.success(r.message);cg=r.gender;ug(cg);ua(cq,cg);gm.classList.remove('ac')}else{toast.error(r.error||'修改失败')}});
 gm.addEventListener('click',e=>{if(e.target===gm)gm.classList.remove('ac')});
 qb.addEventListener('click',()=>{qi.value=cq;qm.classList.add('ac')});
 qmc2.addEventListener('click',()=>qm.classList.remove('ac'));
-qmc.addEventListener('click',async()=>{const q=qi.value.trim();if(!q){toast.error('请输入QQ号');return}if(!/^\d{5,11}$/.test(q)){toast.error('请输入正确的QQ号');return}const r=await apiCall('/api/bind-qq','POST',{qq_number:q});if(r.success){toast.success('QQ绑定成功！');qm.classList.remove('ac');lp()}else{toast.error(r.error||'绑定失败')}});
+qmc.addEventListener('click',async()=>{const q=qi.value.trim();if(!q){toast.error('请输入QQ号');return}if(!/^\d{5,11}$/.test(q)){toast.error('请输入正确的QQ号');return}const r=await apiCall('/api/bind-qq','POST',{qq_number:q});if(r.success){toast.success(r.message);qm.classList.remove('ac');lp()}else{toast.error(r.error||'绑定失败')}});
 qm.addEventListener('click',e=>{if(e.target===qm)qm.classList.remove('ac')});
 cb.addEventListener('click',async()=>{cb.disabled=true;cb.innerHTML='<img src="/svg/loading.svg" class="is sp"> 签到中...';const r=await apiCall('/api/checkin','POST');if(r.success){toast.success(r.message);pd.textContent=r.total;lp()}else{toast.error(r.error||'签到失败')}cb.disabled=false;cb.innerHTML='<img src="/svg/calendar.svg" class="is">签到'});
 
@@ -261,7 +259,7 @@ am2.addEventListener('click',e=>{if(e.target===am2)am2.classList.remove('ac')});
 
 tb.addEventListener('click',()=>{tt.value='';tp.value='';tm.classList.add('ac')});
 tc.addEventListener('click',()=>tm.classList.remove('ac'));
-tc2.addEventListener('click',async()=>{const t=tt.value.trim(),p=tp.value.trim();if(!t){toast.error('请输入目标用户名');return}if(!p){toast.error('请输入积分');return}const n=parseInt(p,10);if(isNaN(n)||n<=0){toast.error('积分必须是正整数');return}const r=await apiCall('/api/transfer','POST',{target:t,points:n});if(r.success){toast.success('转账成功');tm.classList.remove('ac');lp()}else{toast.error(r.error||'转账失败')}});
+tc2.addEventListener('click',async()=>{const t=tt.value.trim(),p=tp.value.trim();if(!t){toast.error('请输入目标用户名');return}if(!p){toast.error('请输入积分');return}const n=parseInt(p,10);if(isNaN(n)||n<=0){toast.error('积分必须是正整数');return}const r=await apiCall('/api/transfer','POST',{target:t,points:n});if(r.success){toast.success(r.message);tm.classList.remove('ac');lp()}else{toast.error(r.error||'转账失败')}});
 tm.addEventListener('click',e=>{if(e.target===tm)tm.classList.remove('ac')});
 lo.addEventListener('click',async()=>{const r=await apiCall('/api/logout','POST');if(r.success){toast.success('已退出登录');setTimeout(()=>{window.location.href='/login'},500)}else{toast.error('退出失败')}});
 bb.addEventListener('click',()=>{window.location.href='/'});
