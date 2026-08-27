@@ -1,8 +1,13 @@
 from . import create_app
-from flask import send_from_directory, request
+from flask import send_from_directory, request, jsonify
 import os
+import traceback
+import logging
 
 app = create_app()
+
+# 生产环境强制关闭调试
+app.debug = False
 
 @app.route('/svg/<path:filename>')
 def serve_svg(filename):
@@ -24,7 +29,14 @@ def after_request(response):
         update_page_view(request.path)
     return response
 
+# 全局异常处理器，确保所有错误返回 JSON
+@app.errorhandler(Exception)
+def handle_exception(e):
+    error_msg = f"服务器内部错误: {str(e)}"
+    logging.error(error_msg)
+    logging.error(traceback.format_exc())
+    return jsonify({"success": False, "error": error_msg}), 500
+
 if __name__ == "__main__":
-    # 生产环境应设置环境变量 FLASK_DEBUG=0 或直接设为 False
-    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
-    app.run(debug=debug_mode)
+    # 即使本地运行也关闭调试，避免敏感信息泄露
+    app.run(debug=False)
