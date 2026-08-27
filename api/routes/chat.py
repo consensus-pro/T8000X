@@ -8,6 +8,7 @@ import requests
 import oss2
 import uuid
 import logging
+import traceback
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -123,110 +124,107 @@ def pusher_config():
 
 @chat_bp.route("/api/upload-image", methods=["POST"])
 def upload_image():
-    username = session.get("username")
-    if not username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
-    if 'image' not in request.files:
-        return jsonify({"success": False, "error": "未选择图片"}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"success": False, "error": "文件名为空"}), 400
-
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(0)
-    if size > 7.5 * 1024 * 1024:
-        return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
-
-    OSS_ACCESS_KEY_ID = os.environ.get("OSS_ACCESS_KEY_ID")
-    OSS_ACCESS_KEY_SECRET = os.environ.get("OSS_ACCESS_KEY_SECRET")
-    OSS_ENDPOINT = os.environ.get("OSS_ENDPOINT")
-    OSS_BUCKET_NAME = os.environ.get("OSS_BUCKET_NAME")
-    OSS_BASE_URL = os.environ.get("OSS_BASE_URL")
-
-    # 检查必需的环境变量
-    missing = []
-    if not OSS_ACCESS_KEY_ID:
-        missing.append("OSS_ACCESS_KEY_ID")
-    if not OSS_ACCESS_KEY_SECRET:
-        missing.append("OSS_ACCESS_KEY_SECRET")
-    if not OSS_ENDPOINT:
-        missing.append("OSS_ENDPOINT")
-    if not OSS_BUCKET_NAME:
-        missing.append("OSS_BUCKET_NAME")
-    if missing:
-        error_msg = f"OSS配置缺失: {', '.join(missing)}"
-        logging.error(error_msg)
-        return jsonify({"success": False, "error": error_msg}), 500
-
     try:
+        username = session.get("username")
+        if not username:
+            return jsonify({"success": False, "error": "未登录"}), 401
+
+        if 'image' not in request.files:
+            return jsonify({"success": False, "error": "未选择图片"}), 400
+
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({"success": False, "error": "文件名为空"}), 400
+
+        file.seek(0, 2)
+        size = file.tell()
+        file.seek(0)
+        if size > 7.5 * 1024 * 1024:
+            return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
+
+        OSS_ACCESS_KEY_ID = os.environ.get("OSS_ACCESS_KEY_ID")
+        OSS_ACCESS_KEY_SECRET = os.environ.get("OSS_ACCESS_KEY_SECRET")
+        OSS_ENDPOINT = os.environ.get("OSS_ENDPOINT")
+        OSS_BUCKET_NAME = os.environ.get("OSS_BUCKET_NAME")
+        OSS_BASE_URL = os.environ.get("OSS_BASE_URL")
+
+        missing = []
+        if not OSS_ACCESS_KEY_ID:
+            missing.append("OSS_ACCESS_KEY_ID")
+        if not OSS_ACCESS_KEY_SECRET:
+            missing.append("OSS_ACCESS_KEY_SECRET")
+        if not OSS_ENDPOINT:
+            missing.append("OSS_ENDPOINT")
+        if not OSS_BUCKET_NAME:
+            missing.append("OSS_BUCKET_NAME")
+        if missing:
+            error_msg = f"OSS配置缺失: {', '.join(missing)}"
+            logging.error(error_msg)
+            return jsonify({"success": False, "error": error_msg}), 500
+
         auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
         bucket = oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME)
         file_bytes = file.read()
         ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
         new_filename = f"{uuid.uuid4().hex}.{ext}"
-        # 尝试上传
         result = bucket.put_object(new_filename, file_bytes)
-        # 检查上传状态（oss2 返回的 result 有 status 属性）
         if result.status != 200:
             error_msg = f"OSS上传失败，状态码: {result.status}"
             logging.error(error_msg)
             return jsonify({"success": False, "error": error_msg}), 500
+
         if OSS_BASE_URL:
             image_url = f"{OSS_BASE_URL.rstrip('/')}/{new_filename}"
         else:
             image_url = f"https://{OSS_BUCKET_NAME}.{OSS_ENDPOINT}/{new_filename}"
-    except oss2.exceptions.OssError as e:
-        error_msg = f"OSS错误: {e.message}"
-        logging.error(error_msg)
-        return jsonify({"success": False, "error": error_msg}), 500
+
+        img_markdown = f"![图片]({image_url})"
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE users 
+            SET last_message_time = NOW() 
+            WHERE username = %s 
+              AND (last_message_time IS NULL OR last_message_time < NOW() - INTERVAL '1 second')
+        """, (username,))
+        if cur.rowcount == 0:
+            return jsonify({"success": False, "error": "发送过于频繁"}), 429
+        conn.commit()
+
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT qq_number FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        if not user:
+            session.pop("username", None)
+            return jsonify({"success": False, "error": "用户不存在"}), 401
+
+        avatar_url = None
+        if user.get("qq_number"):
+            avatar_url = f"https://q1.qlogo.cn/g?b=qq&nk={user['qq_number']}&s=640"
+
+        cur.execute(
+            "INSERT INTO messages (username, content) VALUES (%s, %s) RETURNING id",
+            (username, img_markdown)
+        )
+        msg_id = cur.fetchone()["id"]
+        conn.commit()
+
+        try:
+            pusher_client.trigger("chat", "new-message", {
+                "username": username,
+                "content": img_markdown,
+                "avatar_url": avatar_url
+            })
+        except Exception as e:
+            pass
+
+        return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
+
     except Exception as e:
-        error_msg = f"上传异常: {str(e)}"
+        # 捕获所有未预期的异常，返回JSON错误
+        error_msg = f"服务器内部错误: {str(e)}"
         logging.error(error_msg)
+        logging.error(traceback.format_exc())
         return jsonify({"success": False, "error": error_msg}), 500
-
-    img_markdown = f"![图片]({image_url})"
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE users 
-        SET last_message_time = NOW() 
-        WHERE username = %s 
-          AND (last_message_time IS NULL OR last_message_time < NOW() - INTERVAL '1 second')
-    """, (username,))
-    if cur.rowcount == 0:
-        return jsonify({"success": False, "error": "发送过于频繁"}), 429
-    conn.commit()
-
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT qq_number FROM users WHERE username = %s", (username,))
-    user = cur.fetchone()
-    if not user:
-        session.pop("username", None)
-        return jsonify({"success": False, "error": "用户不存在"}), 401
-
-    avatar_url = None
-    if user.get("qq_number"):
-        avatar_url = f"https://q1.qlogo.cn/g?b=qq&nk={user['qq_number']}&s=640"
-
-    cur.execute(
-        "INSERT INTO messages (username, content) VALUES (%s, %s) RETURNING id",
-        (username, img_markdown)
-    )
-    msg_id = cur.fetchone()["id"]
-    conn.commit()
-
-    try:
-        pusher_client.trigger("chat", "new-message", {
-            "username": username,
-            "content": img_markdown,
-            "avatar_url": avatar_url
-        })
-    except Exception as e:
-        pass
-
-    return jsonify({"success": True, "message": "图片已发送", "id": msg_id})
