@@ -31,7 +31,6 @@ def admin_login():
     now = time.time()
     record = admin_login_attempts.get(username)
 
-    # 检查是否被锁定且未过期
     if record:
         locked_until = record.get("locked_until")
         if locked_until and locked_until > now:
@@ -40,7 +39,6 @@ def admin_login():
             seconds = remaining % 60
             return jsonify({"success": False, "error": f"该账号已被锁定{minutes:02d}分{seconds:02d}秒"}), 403
         elif locked_until and locked_until <= now:
-            # 锁定已过期，清除记录
             admin_login_attempts.pop(username, None)
             record = None
 
@@ -72,12 +70,15 @@ def admin_get_users():
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT id, username, email, created_at FROM users ORDER BY id DESC")
+    cur.execute("""
+        SELECT id, username, email,
+               created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai' as created_at
+        FROM users ORDER BY id DESC
+    """)
     users = cur.fetchall()
-
     for user in users:
         if user.get("created_at"):
-            user["created_at"] = (user["created_at"] + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
+            user["created_at"] = user["created_at"].strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"success": True, "users": users})
 
 @admin_bp.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
@@ -155,12 +156,15 @@ def admin_get_messages():
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT id, username, content, created_at FROM messages ORDER BY created_at DESC")
+    cur.execute("""
+        SELECT id, username, content,
+               created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai' as created_at
+        FROM messages ORDER BY created_at DESC
+    """)
     messages = cur.fetchall()
-
     for msg in messages:
         if msg.get("created_at"):
-            msg["created_at"] = (msg["created_at"] + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
+            msg["created_at"] = msg["created_at"].strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"success": True, "messages": messages})
 
 @admin_bp.route("/api/admin/messages/<int:msg_id>", methods=["DELETE"])

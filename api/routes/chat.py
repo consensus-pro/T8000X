@@ -7,6 +7,7 @@ import os
 import requests
 import oss2
 import uuid
+import imghdr
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -17,10 +18,6 @@ pusher_client = pusher.Pusher(
     cluster=os.environ.get("PUSHER_CLUSTER"),
     ssl=True
 )
-
-@chat_bp.route("/chat")
-def chat_page():
-    return redirect("/")
 
 @chat_bp.route("/api/messages", methods=["GET"])
 def get_messages():
@@ -138,6 +135,13 @@ def upload_image():
     file.seek(0)
     if size > 7.5 * 1024 * 1024:
         return jsonify({"success": False, "error": "图片不能超过7.5MB"}), 400
+
+    # 校验真实文件类型
+    file.seek(0)
+    header = file.read(32)
+    file.seek(0)
+    if not imghdr.what(None, header):
+        return jsonify({"success": False, "error": "不支持的文件类型"}), 400
 
     OSS_ACCESS_KEY_ID = os.environ.get("OSS_ACCESS_KEY_ID")
     OSS_ACCESS_KEY_SECRET = os.environ.get("OSS_ACCESS_KEY_SECRET")

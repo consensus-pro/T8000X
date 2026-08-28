@@ -40,15 +40,6 @@ def return_db_conn():
 def generate_code():
     return str(random.randint(100000, 999999))
 
-def is_code_valid(codes_dict, email, code):
-    record = codes_dict.get(email)
-    if not record:
-        return False
-    if record["code"] != code:
-        return False
-    if time.time() > record["expires"]:
-        return False
-    return True
 
 def is_valid_email(email):
     return re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email) is not None
