@@ -37,9 +37,9 @@ body{background:#fff;min-height:100vh;padding:20px;position:relative}
 .mi .mt .mx .mu{font-weight:600;color:#1677ff;font-size:12px;flex-shrink:0}
 .mi .mt .mx .mu::after{content:': ';color:#1677ff}
 .mi .mt .mx .mc{color:#333;font-size:10px;word-break:break-word;flex:1;min-width:0}
-/* 修改删除按钮样式 - 更窄更紧凑 */
+/* 删除按钮 - 极致紧凑 */
 .mi .mt .md {
-  padding: 0 4px;
+  padding: 0 3px;
   height: 18px;
   line-height: 18px;
   background: #d9534f;
@@ -48,8 +48,10 @@ body{background:#fff;min-height:100vh;padding:20px;position:relative}
   border-radius: 4px;
   cursor: pointer;
   font-size: 10px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  width: auto;
   min-width: 0;
+  box-sizing: border-box;
 }
 .mi .mt .md:hover{background:#c9302c}
 .mi .mt2{color:#bbb;font-size:6px;margin-top:1px;padding-left:0}
