@@ -40,9 +40,31 @@ body{display:flex;justify-content:center;align-items:center;padding:20px;positio
 .eb{padding:10px 28px;border-radius:8px;font-size:14px}
 .eb .i{filter:brightness(0)invert(1)}
 .bb2:hover,.bb2:active,.eb:hover,.eb:active{background:#0a0a0a}
-#ec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center;width:100%;min-height:280px;gap:16px}
-#ec .ei{width:72px;height:72px;filter:brightness(0)saturate(100%)}
-#ec .et{font-size:20px;font-weight:700;color:#333}
+
+/* ===== 修改：错误容器居中，缩小图标和标题 ===== */
+#errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    text-align: center;
+    width: 100%;
+    min-height: 200px;   /* 从280px调小 */
+    gap: 14px;
+}
+.ei {
+    width: 42px;         /* 从72px缩小 */
+    height: 42px;
+    filter: brightness(0) saturate(100%);
+}
+.et {
+    font-size: 16px;     /* 从20px缩小 */
+    font-weight: 700;
+    color: #333;
+}
+/* ===== 修改结束 ===== */
+
 .scard{background:#fff;border-radius:16px;padding:30px 24px;width:100%;max-width:340px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
 .scard .sh{margin-bottom:16px}
 .scard .sh h3{font-size:18px;font-weight:600;color:#0a0a0a;margin-bottom:4px;display:flex;align-items:center;gap:6px}
