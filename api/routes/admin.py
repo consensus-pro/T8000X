@@ -5,9 +5,18 @@ from ..utils import get_db
 from datetime import timedelta
 import time
 import os
+from functools import wraps
 
 admin_bp = Blueprint('admin', __name__)
 admin_login_attempts = {}
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("admin"):
+            return jsonify({"success": False, "error": "未登录"}), 401
+        return f(*args, **kwargs)
+    return decorated
 
 @admin_bp.route("/admin")
 def admin_login_page():
@@ -63,30 +72,21 @@ def admin_login():
             return jsonify({"success": False, "error": f"账号或密码错误 你还可再试 {remaining_attempts} 次"}), 401
 
 @admin_bp.route("/api/admin/users", methods=["GET"])
+@admin_required
 def admin_get_users():
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("""
-        SELECT id, username, email,
-               created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai' as created_at
-        FROM users ORDER BY id DESC
-    """)
+    cur.execute("SELECT id, username, email, created_at FROM users ORDER BY id DESC")
     users = cur.fetchall()
+
     for user in users:
         if user.get("created_at"):
-            user["created_at"] = user["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+            user["created_at"] = (user["created_at"] + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"success": True, "users": users})
 
 @admin_bp.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
+@admin_required
 def admin_delete_user(user_id):
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
@@ -99,11 +99,8 @@ def admin_delete_user(user_id):
     return jsonify({"success": True, "message": "用户已删除"})
 
 @admin_bp.route("/api/admin/users/<int:user_id>/reset-password", methods=["POST"])
+@admin_required
 def admin_reset_password(user_id):
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
     data = request.get_json()
     new_password = data.get("new_password", "").strip()
     if len(new_password) < 6:
@@ -121,11 +118,8 @@ def admin_reset_password(user_id):
     return jsonify({"success": True, "message": "密码已修改"})
 
 @admin_bp.route("/api/admin/users/<int:user_id>/update-points", methods=["POST"])
+@admin_required
 def admin_update_points(user_id):
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
     data = request.get_json()
     points_str = data.get("points")
     if points_str is None:
@@ -149,30 +143,21 @@ def admin_update_points(user_id):
     return jsonify({"success": True, "message": "积分已修改"})
 
 @admin_bp.route("/api/admin/messages", methods=["GET"])
+@admin_required
 def admin_get_messages():
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("""
-        SELECT id, username, content,
-               created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Shanghai' as created_at
-        FROM messages ORDER BY created_at DESC
-    """)
+    cur.execute("SELECT id, username, content, created_at FROM messages ORDER BY created_at DESC")
     messages = cur.fetchall()
+
     for msg in messages:
         if msg.get("created_at"):
-            msg["created_at"] = msg["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+            msg["created_at"] = (msg["created_at"] + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"success": True, "messages": messages})
 
 @admin_bp.route("/api/admin/messages/<int:msg_id>", methods=["DELETE"])
+@admin_required
 def admin_delete_message(msg_id):
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM messages WHERE id = %s", (msg_id,))
@@ -180,10 +165,8 @@ def admin_delete_message(msg_id):
     return jsonify({"success": True, "message": "消息已删除"})
 
 @admin_bp.route("/api/admin/page-views", methods=["GET"])
+@admin_required
 def admin_get_page_views():
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
     from ..utils import get_page_views
     rows = get_page_views()
     total = sum(row[1] for row in rows)

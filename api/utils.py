@@ -11,6 +11,7 @@ from flask import g
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
 _db_pool = None
+_allowed_domains_cache = None
 
 def get_pool():
     global _db_pool
@@ -40,15 +41,18 @@ def return_db_conn():
 def generate_code():
     return str(random.randint(100000, 999999))
 
-
 def is_valid_email(email):
     return re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email) is not None
 
 def load_allowed_domains():
+    global _allowed_domains_cache
+    if _allowed_domains_cache is not None:
+        return _allowed_domains_cache
     try:
         import json
         with open(os.path.join(os.path.dirname(__file__), '..', 'TrueEmail.json'), 'r', encoding='utf-8') as f:
             domains = json.load(f)
+        _allowed_domains_cache = domains
         return domains
     except FileNotFoundError:
         raise Exception("FILE_NOT_FOUND")

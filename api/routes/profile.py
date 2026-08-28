@@ -160,11 +160,15 @@ def transfer_points():
     if not target_user:
         return jsonify({"success": False, "error": "用户不存在"}), 404
 
-    # 原子更新，检查余额
+    cur.execute("SELECT total_points FROM user_stats WHERE user_id = (SELECT id FROM users WHERE username = %s)", (username,))
+    sender_stats = cur.fetchone()
+    if not sender_stats:
+        return jsonify({"success": False, "error": "您没有积分记录"}), 400
+    if sender_stats["total_points"] < points:
+        return jsonify({"success": False, "error": "积分不足"}), 400
+
     try:
-        cur.execute("UPDATE user_stats SET total_points = total_points - %s WHERE user_id = (SELECT id FROM users WHERE username = %s) AND total_points >= %s", (points, username, points))
-        if cur.rowcount == 0:
-            return jsonify({"success": False, "error": "积分不足"}), 400
+        cur.execute("UPDATE user_stats SET total_points = total_points - %s WHERE user_id = (SELECT id FROM users WHERE username = %s)", (points, username))
         cur.execute("UPDATE user_stats SET total_points = total_points + %s WHERE user_id = (SELECT id FROM users WHERE username = %s)", (points, target))
         conn.commit()
     except Exception as e:
