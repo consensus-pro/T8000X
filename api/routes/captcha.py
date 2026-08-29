@@ -5,12 +5,13 @@ import hashlib
 import time
 import base64
 import os
+import threading
 from PIL import Image, ImageDraw, ImageFont
 
 captcha_bp = Blueprint('captcha', __name__)
 
-# 存储结构：{token: {'text': 'ABC12', 'expire_at': 1234567890.0}}
 captcha_store = {}
+captcha_lock = threading.Lock()
 
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 font_path = os.path.join(base_dir, 'api', 'Plus.ttf')
@@ -24,27 +25,52 @@ except:
     font_available = False
 
 
-def check_captcha(token, user_input):
-    """校验验证码，过期自动删除，返回 (bool, 错误信息)"""
-    if not token or token not in captcha_store:
-        return False, "验证码不存在或已过期"
-    record = captcha_store[token]
-    if record['expire_at'] < time.time():
-        del captcha_store[token]
-        return False, "验证码已过期，请刷新重试"
-    if record['text'] != user_input.upper():
-        return False, "验证码错误"
-    return True, "验证通过"
+def verify_captcha(token, user_input, remove=False):
+    """
+    原子验证图片验证码（线程安全）
+    :param token: token
+    :param user_input: 用户输入的大写字符串
+    :param remove: 是否验证通过后删除（登录/注册用 True，发送邮件用 False）
+    :return: (bool, 错误信息)
+    """
+    with captcha_lock:
+        if remove:
+            record = captcha_store.pop(token, None)
+        else:
+            record = captcha_store.get(token)
+
+        if record is None:
+            return False, "验证码不存在或已过期"
+
+        if record['expire_at'] < time.time():
+            if not remove:
+                captcha_store.pop(token, None)
+            return False, "验证码已过期"
+
+        if record['text'] != user_input.upper():
+            return False, "验证码错误"
+
+        return True, "验证通过"
 
 
 @captcha_bp.route('/api/captcha', methods=['GET'])
 def get_captcha():
+    # 清理过期验证码
+    with captcha_lock:
+        now = time.time()
+        expired = [k for k, v in captcha_store.items() if v['expire_at'] < now]
+        for k in expired:
+            captcha_store.pop(k, None)
+
     chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
     text = ''.join(random.choices(chars, k=5))
     token = hashlib.md5(f"{text}{time.time()}{random.random()}".encode()).hexdigest()
     expire_at = time.time() + 600  # 10 分钟
-    captcha_store[token] = {'text': text, 'expire_at': expire_at}
 
+    with captcha_lock:
+        captcha_store[token] = {'text': text, 'expire_at': expire_at}
+
+    # 绘制图片（与原来完全相同）
     width, height = 100, 42
     image = Image.new('RGB', (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(image)

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session, render_template, redirec
 from werkzeug.security import generate_password_hash, check_password_hash
 from psycopg2.extras import RealDictCursor
 from ..utils import get_db, generate_code, is_valid_email, is_allowed_email
-from .captcha import captcha_store, check_captcha
+from .captcha import verify_captcha
 import re
 from datetime import datetime, timezone, timedelta
 
@@ -29,8 +29,8 @@ def send_code():
     token = data.get("captcha_token")
     user_input = data.get("captcha", "").strip().upper()
 
-    # 校验图片验证码（不删除，注册时还需再次校验）
-    ok, msg = check_captcha(token, user_input)
+    # 仅验证，不删除
+    ok, msg = verify_captcha(token, user_input, remove=False)
     if not ok:
         return jsonify({"success": False, "error": msg}), 400
 
@@ -103,12 +103,10 @@ def register():
     captcha_token = data.get("captcha_token")
     captcha_input = data.get("captcha", "").strip().upper()
 
-    # 再次校验图片验证码（注册完成，可以删除）
-    ok, msg = check_captcha(captcha_token, captcha_input)
+    # 验证并删除（注册完成）
+    ok, msg = verify_captcha(captcha_token, captcha_input, remove=True)
     if not ok:
         return jsonify({"success": False, "error": msg}), 400
-    # 删除已使用的验证码
-    del captcha_store[captcha_token]
 
     if not all([username, password, email_raw, code]):
         return jsonify({"success": False, "error": "有字段未填"}), 400
@@ -172,10 +170,9 @@ def login():
     token = data.get("captcha_token")
     user_input = data.get("captcha", "").strip().upper()
 
-    ok, msg = check_captcha(token, user_input)
+    ok, msg = verify_captcha(token, user_input, remove=True)
     if not ok:
         return jsonify({"success": False, "error": msg}), 400
-    del captcha_store[token]   # 登录完成删除
 
     if not username or not password:
         return jsonify({"success": False, "error": "账号或密码未填"}), 400

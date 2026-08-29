@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session, render_template, redirec
 from werkzeug.security import generate_password_hash
 from psycopg2.extras import RealDictCursor
 from ..utils import get_db
-from .captcha import captcha_store, check_captcha
+from .captcha import verify_captcha
 from datetime import timedelta
 import time
 import os
@@ -37,10 +37,9 @@ def admin_login():
     token = data.get("captcha_token")
     user_input = data.get("captcha", "").strip().upper()
 
-    ok, msg = check_captcha(token, user_input)
+    ok, msg = verify_captcha(token, user_input, remove=True)
     if not ok:
         return jsonify({"success": False, "error": msg}), 400
-    del captcha_store[token]   # 登录完成删除
 
     if not username or not password:
         return jsonify({"success": False, "error": "账号和密码必填"}), 400
@@ -79,6 +78,7 @@ def admin_login():
             admin_login_attempts[username] = record
             return jsonify({"success": False, "error": f"账号或密码错误 你还可再试 {remaining_attempts} 次"}), 401
 
+# 以下路由与原代码完全一致，仅保留 admin_required 装饰器
 @admin_bp.route("/api/admin/users", methods=["GET"])
 @admin_required
 def admin_get_users():
@@ -86,7 +86,6 @@ def admin_get_users():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT id, username, email, created_at FROM users ORDER BY id DESC")
     users = cur.fetchall()
-
     for user in users:
         if user.get("created_at"):
             user["created_at"] = (user["created_at"] + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
@@ -100,7 +99,6 @@ def admin_delete_user(user_id):
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
     if not cur.fetchone():
         return jsonify({"success": False, "error": "用户不存在"}), 404
-
     cur.execute("DELETE FROM user_stats WHERE user_id = %s", (user_id,))
     cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
     conn.commit()
@@ -113,13 +111,11 @@ def admin_reset_password(user_id):
     new_password = data.get("new_password", "").strip()
     if len(new_password) < 6:
         return jsonify({"success": False, "error": "密码至少6位"}), 400
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
     if not cur.fetchone():
         return jsonify({"success": False, "error": "用户不存在"}), 404
-
     password_hash = generate_password_hash(new_password)
     cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
     conn.commit()
@@ -132,18 +128,15 @@ def admin_update_points(user_id):
     points_str = data.get("points")
     if points_str is None:
         return jsonify({"success": False, "error": "积分不能为空"}), 400
-
     try:
         points = int(points_str)
     except ValueError:
         return jsonify({"success": False, "error": "积分必须是整数"}), 400
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
     if not cur.fetchone():
         return jsonify({"success": False, "error": "用户不存在"}), 404
-
     cur.execute("UPDATE user_stats SET total_points = %s WHERE user_id = %s", (points, user_id))
     if cur.rowcount == 0:
         cur.execute("INSERT INTO user_stats (user_id, total_points, checkin_days) VALUES (%s, %s, 0)", (user_id, points))
@@ -157,7 +150,6 @@ def admin_get_messages():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT id, username, content, created_at FROM messages ORDER BY created_at DESC")
     messages = cur.fetchall()
-
     for msg in messages:
         if msg.get("created_at"):
             msg["created_at"] = (msg["created_at"] + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
