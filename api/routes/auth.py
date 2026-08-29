@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session, render_template, redirec
 from werkzeug.security import generate_password_hash, check_password_hash
 from psycopg2.extras import RealDictCursor
 from ..utils import get_db, generate_code, is_valid_email, is_allowed_email
-from .captcha import captcha_store
+from .captcha import captcha_store, check_captcha
 import re
 from datetime import datetime, timezone, timedelta
 
@@ -29,14 +29,13 @@ def send_code():
     token = data.get("captcha_token")
     user_input = data.get("captcha", "").strip().upper()
 
+    # 校验图片验证码（不删除，注册时还需再次校验）
+    ok, msg = check_captcha(token, user_input)
+    if not ok:
+        return jsonify({"success": False, "error": msg}), 400
+
     if not email_raw:
         return jsonify({"success": False, "error": "请输入邮箱"}), 400
-
-    if not token or token not in captcha_store:
-        return jsonify({"success": False, "error": "验证码已过期"}), 400
-    if captcha_store[token] != user_input:
-        return jsonify({"success": False, "error": "验证码错误"}), 400
-    del captcha_store[token]
 
     email = email_raw.lower().strip()
     if not is_valid_email(email):
@@ -101,6 +100,15 @@ def register():
     password = data.get("password")
     email_raw = data.get("email")
     code = data.get("code")
+    captcha_token = data.get("captcha_token")
+    captcha_input = data.get("captcha", "").strip().upper()
+
+    # 再次校验图片验证码（注册完成，可以删除）
+    ok, msg = check_captcha(captcha_token, captcha_input)
+    if not ok:
+        return jsonify({"success": False, "error": msg}), 400
+    # 删除已使用的验证码
+    del captcha_store[captcha_token]
 
     if not all([username, password, email_raw, code]):
         return jsonify({"success": False, "error": "有字段未填"}), 400
@@ -127,7 +135,7 @@ def register():
     )
     row = cur.fetchone()
     if not row or row[0] != code:
-        return jsonify({"success": False, "error": "验证码错误或已过期"}), 400
+        return jsonify({"success": False, "error": "邮箱验证码错误或已过期"}), 400
 
     cur.execute("DELETE FROM email_verifications WHERE email = %s", (email,))
     conn.commit()
@@ -164,11 +172,10 @@ def login():
     token = data.get("captcha_token")
     user_input = data.get("captcha", "").strip().upper()
 
-    if not token or token not in captcha_store:
-        return jsonify({"success": False, "error": "验证码已过期"}), 400
-    if captcha_store[token] != user_input:
-        return jsonify({"success": False, "error": "验证码错误"}), 400
-    del captcha_store[token]
+    ok, msg = check_captcha(token, user_input)
+    if not ok:
+        return jsonify({"success": False, "error": msg}), 400
+    del captcha_store[token]   # 登录完成删除
 
     if not username or not password:
         return jsonify({"success": False, "error": "账号或密码未填"}), 400

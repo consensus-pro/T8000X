@@ -8,6 +8,8 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 captcha_bp = Blueprint('captcha', __name__)
+
+# 存储结构：{token: {'text': 'ABC12', 'expire_at': 1234567890.0}}
 captcha_store = {}
 
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -21,12 +23,27 @@ try:
 except:
     font_available = False
 
+
+def check_captcha(token, user_input):
+    """校验验证码，过期自动删除，返回 (bool, 错误信息)"""
+    if not token or token not in captcha_store:
+        return False, "验证码不存在或已过期"
+    record = captcha_store[token]
+    if record['expire_at'] < time.time():
+        del captcha_store[token]
+        return False, "验证码已过期，请刷新重试"
+    if record['text'] != user_input.upper():
+        return False, "验证码错误"
+    return True, "验证通过"
+
+
 @captcha_bp.route('/api/captcha', methods=['GET'])
 def get_captcha():
     chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
     text = ''.join(random.choices(chars, k=5))
     token = hashlib.md5(f"{text}{time.time()}{random.random()}".encode()).hexdigest()
-    captcha_store[token] = text
+    expire_at = time.time() + 600  # 10 分钟
+    captcha_store[token] = {'text': text, 'expire_at': expire_at}
 
     width, height = 100, 42
     image = Image.new('RGB', (width, height), (255, 255, 255))

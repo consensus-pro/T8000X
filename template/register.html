@@ -81,7 +81,6 @@ async function refreshCaptcha() {
             document.getElementById('captchaImg').src = data.data.image;
             captchaToken = data.data.captcha_token;
         }
-        // 静默失败
     } catch (e) {
         // 静默失败
     }
@@ -127,16 +126,26 @@ async function refreshCaptcha() {
             toast.error(r.error||'发送失败');
             sendBtn.disabled=false;
             sendBtn.textContent='获取验证码';
-            refreshCaptcha();
+            refreshCaptcha();   // 刷新图片验证码（可选，这里刷新是为了安全）
         }
     });
 
     regBtn.addEventListener('click',async ()=>{
         const un=u.value.trim(), pw=p.value.trim(), em=e.value.trim(), cd=c.value.trim();
+        const captcha=ca.value.trim();
         if(!un||!pw||!em||!cd){ toast.error('请填写所有字段'); return; }
+        if(!captcha){ toast.error('请输入图片验证码'); return; }
+        if(!captchaToken){ toast.error('验证码未加载，请刷新重试'); return; }
         regBtn.disabled=true;
         regBtn.innerHTML='<img src="/svg/loading.svg" class="i sp"> 注册中...';
-        const r=await api('/api/register','POST',{username:un,password:pw,email:em,code:cd});
+        const r=await api('/api/register','POST',{
+            username:un,
+            password:pw,
+            email:em,
+            code:cd,
+            captcha:captcha,
+            captcha_token:captchaToken
+        });
         if(r.success){
             toast.success(r.message);
             regBtn.disabled=false;
@@ -146,6 +155,10 @@ async function refreshCaptcha() {
             toast.error(r.error||'注册失败');
             regBtn.disabled=false;
             regBtn.innerHTML='<img src="/svg/register.svg" class="i"> 注册';
+            // 如果后端提示验证码错误，刷新验证码
+            if(r.error && (r.error.includes('验证码') || r.error.includes('过期'))){
+                refreshCaptcha();
+            }
         }
     });
 
