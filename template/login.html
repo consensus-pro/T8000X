@@ -40,13 +40,11 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .captcha-img-wrap.loading .captcha-refresh-overlay{opacity:1;background:rgba(0,0,0,0.1)}
 .captcha-img-wrap.loading .captcha-refresh-overlay i{animation:spin .6s linear infinite}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@media (max-width:480px){.captcha-img-wrap{width:100px;min-height:42px}.captcha-img-wrap img{min-height:42px}}
+@media (max-width:360px){.captcha-img-wrap{width:90px}.captcha-row{gap:6px}}
 .bt{width:100%;height:36px;min-height:36px;line-height:36px;padding:0 10px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .3s ease;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
 .bt:hover{background:#222}
 .bt:disabled{background:#555;color:#fff;cursor:not-allowed}
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:#0a0a0a;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:all .3s ease;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.15);max-width:90vw;text-align:center}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media (max-width:480px){.captcha-img-wrap{width:100px;min-height:42px}.captcha-img-wrap img{min-height:42px}}
-@media (max-width:360px){.captcha-img-wrap{width:90px}.captcha-row{gap:6px}}
 </style>
 </head>
 <body>
@@ -70,110 +68,14 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 </div>
 <button class="bt" id="loginBtn"><img src="/svg/enter.svg" class="iw"> 登录</button>
 </div>
-<div class="toast" id="toast"></div>
+<script src="/api/toast.js"></script>
 <script>
-function showToast(msg, duration) {
-    duration = duration || 2500;
-    var t = document.getElementById('toast');
-    if (!t) return;
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function() {
-        t.classList.remove('show');
-    }, duration);
-}
-
-var captchaToken = '';
-
-function refreshCaptcha() {
-    var img = document.getElementById('loginCaptchaImg');
-    var wrap = document.getElementById('loginCaptchaWrap');
-    if (!img || !wrap) return;
-    wrap.classList.add('loading');
-    fetch('/api/captcha', { credentials: 'include' })
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-            wrap.classList.remove('loading');
-            if (d.code === 0 && d.data) {
-                img.src = d.data.image;
-                captchaToken = d.data.captcha_token;
-                img.style.opacity = '1';
-                document.getElementById('loginCaptcha').value = '';
-                document.getElementById('loginCaptcha').focus();
-            } else {
-                img.style.opacity = '0.3';
-                showToast(d.msg || '验证码加载失败');
-                setTimeout(refreshCaptcha, 1000);
-            }
-        })
-        .catch(function() {
-            wrap.classList.remove('loading');
-            img.style.opacity = '0.3';
-            showToast('加载失败，点击重试');
-            setTimeout(refreshCaptcha, 1500);
-        });
-}
-
-document.getElementById('loginBtn').addEventListener('click', function() {
-    var un = document.getElementById('loginUsername').value.trim();
-    var pw = document.getElementById('loginPassword').value.trim();
-    var code = document.getElementById('loginCaptcha').value.trim().toUpperCase();
-
-    if (!un || !pw) {
-        showToast('请填写账号和密码');
-        return;
-    }
-    if (!captchaToken || !code) {
-        showToast('请完成图形验证码');
-        return;
-    }
-
-    var btn = this;
-    btn.disabled = true;
-    btn.innerHTML = '<img src="/svg/loading.svg" class="iw sp"> 登录中...';
-
-    fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-            username: un,
-            password: pw,
-            captcha_token: captchaToken,
-            captcha_code: code
-        })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.success) {
-            showToast(d.message);
-            setTimeout(function() {
-                window.location.href = '/';
-            }, 600);
-        } else {
-            showToast(d.error || '登录失败');
-            refreshCaptcha();
-            document.getElementById('loginCaptcha').value = '';
-            btn.disabled = false;
-            btn.innerHTML = '<img src="/svg/enter.svg" class="iw"> 登录';
-        }
-    })
-    .catch(function() {
-        showToast('网络错误，请重试');
-        btn.disabled = false;
-        btn.innerHTML = '<img src="/svg/enter.svg" class="iw"> 登录';
-    });
-});
-
-document.getElementById('loginPassword').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('loginBtn').click();
-});
-document.getElementById('loginCaptcha').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('loginBtn').click();
-});
-
-document.addEventListener('DOMContentLoaded', refreshCaptcha);
+var captchaToken='';
+function refreshCaptcha(){var img=document.getElementById('loginCaptchaImg'),wrap=document.getElementById('loginCaptchaWrap');if(!img||!wrap)return;wrap.classList.add('loading');fetch('/api/captcha',{credentials:'include'}).then(function(r){return r.json()}).then(function(d){wrap.classList.remove('loading');if(d.code===0&&d.data){img.src=d.data.image;captchaToken=d.data.captcha_token;img.style.opacity='1';document.getElementById('loginCaptcha').value='';document.getElementById('loginCaptcha').focus()}else{img.style.opacity='0.3';toast.error(d.msg||'验证码加载失败');setTimeout(refreshCaptcha,1000)}}).catch(function(){wrap.classList.remove('loading');img.style.opacity='0.3';toast.error('验证码加载失败，点击重试');setTimeout(refreshCaptcha,1500)})}
+document.getElementById('loginBtn').addEventListener('click',function(){var un=document.getElementById('loginUsername').value.trim(),pw=document.getElementById('loginPassword').value.trim(),code=document.getElementById('loginCaptcha').value.trim().toUpperCase();if(!un||!pw){toast.error('请填写账号和密码');return}if(!captchaToken||!code){toast.error('请完成图形验证码');return}var btn=this;btn.disabled=true;btn.innerHTML='<img src="/svg/loading.svg" class="iw sp"> 登录中...';fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,password:pw,captcha_token:captchaToken,captcha_code:code})}).then(function(r){return r.json()}).then(function(d){if(d.success){toast.success(d.message);setTimeout(function(){window.location.href='/'},600)}else{toast.error(d.error||'登录失败');refreshCaptcha();document.getElementById('loginCaptcha').value='';btn.disabled=false;btn.innerHTML='<img src="/svg/enter.svg" class="iw"> 登录'}}).catch(function(){toast.error('网络错误，请重试');btn.disabled=false;btn.innerHTML='<img src="/svg/enter.svg" class="iw"> 登录'})});
+document.getElementById('loginPassword').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginBtn').click()});
+document.getElementById('loginCaptcha').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginBtn').click()});
+document.addEventListener('DOMContentLoaded',refreshCaptcha);
 </script>
 </body>
 </html>
