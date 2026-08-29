@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, session, render_template, redirec
 from werkzeug.security import generate_password_hash
 from psycopg2.extras import RealDictCursor
 from ..utils import get_db
+from .captcha import captcha_store
 from datetime import timedelta
 import time
 import os
@@ -33,11 +34,14 @@ def admin_login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    captcha = data.get("captcha", "").strip().upper()
+    token = data.get("captcha_token")
+    user_input = data.get("captcha", "").strip().upper()
 
-    if not captcha or captcha != session.get("captcha", ""):
+    if not token or token not in captcha_store:
+        return jsonify({"success": False, "error": "验证码已过期"}), 400
+    if captcha_store[token] != user_input:
         return jsonify({"success": False, "error": "验证码错误"}), 400
-    session.pop("captcha", None)
+    del captcha_store[token]
 
     if not username or not password:
         return jsonify({"success": False, "error": "账号和密码必填"}), 400

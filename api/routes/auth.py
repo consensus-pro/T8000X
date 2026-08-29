@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, session, render_template, redirec
 from werkzeug.security import generate_password_hash, check_password_hash
 from psycopg2.extras import RealDictCursor
 from ..utils import get_db, generate_code, is_valid_email, is_allowed_email
+from .captcha import captcha_store
 import re
 from datetime import datetime, timezone, timedelta
 
@@ -25,14 +26,17 @@ def login_page():
 def send_code():
     data = request.get_json()
     email_raw = data.get("email")
-    captcha = data.get("captcha", "").strip().upper()
+    token = data.get("captcha_token")
+    user_input = data.get("captcha", "").strip().upper()
 
     if not email_raw:
         return jsonify({"success": False, "error": "请输入邮箱"}), 400
 
-    if not captcha or captcha != session.get("captcha", ""):
-        return jsonify({"success": False, "error": "图片验证码错误"}), 400
-    session.pop("captcha", None)
+    if not token or token not in captcha_store:
+        return jsonify({"success": False, "error": "验证码已过期"}), 400
+    if captcha_store[token] != user_input:
+        return jsonify({"success": False, "error": "验证码错误"}), 400
+    del captcha_store[token]
 
     email = email_raw.lower().strip()
     if not is_valid_email(email):
@@ -41,7 +45,7 @@ def send_code():
     try:
         if not is_allowed_email(email):
             return jsonify({"success": False, "error": "请使用正规邮箱注册"}), 400
-    except Exception as e:
+    except Exception:
         return jsonify({"success": False, "error": "检测器加载失败"}), 500
 
     conn = get_db()
@@ -108,7 +112,7 @@ def register():
     try:
         if not is_allowed_email(email):
             return jsonify({"success": False, "error": "请使用正规邮箱注册"}), 400
-    except Exception as e:
+    except Exception:
         return jsonify({"success": False, "error": "检测器加载失败"}), 500
 
     if not re.match(r'^[\u4e00-\u9fa5a-zA-Z0-9]+$', username):
@@ -146,12 +150,9 @@ def register():
             (user_id,)
         )
         conn.commit()
-    except Exception as e:
+    except Exception:
         conn.rollback()
-        if "email" in str(e):
-            return jsonify({"success": False, "error": "该邮箱已被注册"}), 400
-        else:
-            return jsonify({"success": False, "error": "注册失败，请重试"}), 400
+        return jsonify({"success": False, "error": "注册失败，请重试"}), 400
 
     return jsonify({"success": True, "message": "注册成功"})
 
@@ -160,11 +161,14 @@ def login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    captcha = data.get("captcha", "").strip().upper()
+    token = data.get("captcha_token")
+    user_input = data.get("captcha", "").strip().upper()
 
-    if not captcha or captcha != session.get("captcha", ""):
+    if not token or token not in captcha_store:
+        return jsonify({"success": False, "error": "验证码已过期"}), 400
+    if captcha_store[token] != user_input:
         return jsonify({"success": False, "error": "验证码错误"}), 400
-    session.pop("captcha", None)
+    del captcha_store[token]
 
     if not username or not password:
         return jsonify({"success": False, "error": "账号或密码未填"}), 400
