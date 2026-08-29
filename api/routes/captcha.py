@@ -15,7 +15,6 @@ font_path = os.path.join(base_dir, 'api', 'Plus.ttf')
 if not os.path.exists(font_path):
     font_path = os.path.join(base_dir, 'fonts', 'Plus.ttf')
 
-# 预加载字体（用于检测是否可用）
 try:
     test_font = ImageFont.truetype(font_path, 20)
     font_available = True
@@ -35,11 +34,10 @@ def get_captcha():
 
     colors = [(220, 50, 50), (30, 120, 210), (40, 180, 80), (160, 50, 200), (220, 160, 20)]
 
-    # 为每个字符生成随机大小和位置
     char_data = []
     for ch in text:
-        size = random.randint(22, 32)  # 随机大小
-        y_offset = random.randint(-3, 3)  # 垂直偏移
+        size = random.randint(16, 26)  # 随机大小 16~26px
+        y_offset = random.randint(-3, 3)
         if font_available:
             try:
                 font = ImageFont.truetype(font_path, size)
@@ -47,32 +45,28 @@ def get_captcha():
                 font = ImageFont.load_default()
         else:
             font = ImageFont.load_default()
-        # 获取字符宽度
         try:
             bbox = font.getbbox(ch)
             char_width = bbox[2] - bbox[0]
         except:
-            char_width = 16
+            char_width = 14
         char_data.append((ch, font, char_width, y_offset))
 
-    # 计算总宽度并居中
     spacing = 3
     total_width = sum([cd[2] for cd in char_data]) + spacing * (len(char_data) - 1)
     start_x = (width - total_width) // 2
 
     x = start_x
     for i, (ch, font, char_width, y_offset) in enumerate(char_data):
-        y = 12 + y_offset  # 基础Y=12，加随机偏移
+        y = 12 + y_offset
         draw.text((x, y), ch, font=font, fill=colors[i % len(colors)])
         x += char_width + spacing
 
-    # 干扰线
     for _ in range(2):
         draw.line([(random.randint(0, width), random.randint(0, height)),
                    (random.randint(0, width), random.randint(0, height))],
                   fill=(220, 220, 220), width=1)
 
-    # 噪点
     for _ in range(15):
         draw.point((random.randint(0, width), random.randint(0, height)), fill=(200, 200, 200))
 
