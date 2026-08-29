@@ -129,13 +129,18 @@ input[type="checkbox"]{accent-color:#000}
 </div>
 
 <div class="fs">
-<div class="fh" id="userToggle"><span><img src="/svg/users.svg" class="i"> 用户管理 <span id="userCount">(0)</span></span><span id="userArrow"><img src="/svg/switch.svg" class="i ar"></span></div>
-<div class="fb" id="userBody"><div id="userListContainer"></div></div>
+<div class="fh" id="statsToggle"><span><img src="/svg/data.svg" class="i"> 访问统计 <span id="statsCount">(0)</span></span><span id="statsArrow"><img src="/svg/switch.svg" class="i ar"></span></div>
+<div class="fb" id="statsBody"><div id="statsListContainer"></div></div>
 </div>
 
 <div class="fs">
-<div class="fh" id="statsToggle"><span><img src="/svg/data.svg" class="i"> 访问统计 <span id="statsCount">(0)</span></span><span id="statsArrow"><img src="/svg/switch.svg" class="i ar"></span></div>
-<div class="fb" id="statsBody"><div id="statsListContainer"></div></div>
+<div class="fh" id="deepseekToggle"><span><img src="/svg/code.svg" class="i"> DeepSeek API 统计</span><span id="deepseekArrow"><img src="/svg/switch.svg" class="i ar"></span></div>
+<div class="fb" id="deepseekBody"><div id="deepseekListContainer"></div></div>
+</div>
+
+<div class="fs">
+<div class="fh" id="userToggle"><span><img src="/svg/users.svg" class="i"> 用户管理 <span id="userCount">(0)</span></span><span id="userArrow"><img src="/svg/switch.svg" class="i ar"></span></div>
+<div class="fb" id="userBody"><div id="userListContainer"></div></div>
 </div>
 
 <div class="fs">
@@ -212,6 +217,13 @@ input[type="checkbox"]{accent-color:#000}
 <div class="sc2">
 <div class="sn" data-field="count">0</div>
 <div class="sl" data-field="label">页面</div>
+</div>
+</template>
+
+<template id="tpl-deepseek-card">
+<div class="sc2">
+<div class="sn" data-field="count">0.00</div>
+<div class="sl" data-field="label">余额</div>
 </div>
 </template>
 
@@ -301,6 +313,10 @@ var stb = $('statsBody');
 var sta = $('statsArrow');
 var stl = $('statsListContainer');
 var stc = $('statsCount');
+var dst = $('deepseekToggle');
+var dsb = $('deepseekBody');
+var dsa = $('deepseekArrow');
+var dsl = $('deepseekListContainer');
 
 var cru = null;
 var cpu = null;
@@ -308,10 +324,12 @@ var uload = false;
 var mload = false;
 var aload = false;
 var sload = false;
+var dsload = false;
 var uopen = false;
 var mopen = false;
 var aopen = false;
 var sopen = false;
+var dsopen = false;
 
 function renderLoading(container) {
 container.innerHTML = '';
@@ -425,6 +443,20 @@ grid.appendChild(card);
 container.appendChild(grid);
 }
 
+function renderDeepseekCards(balance, today, total) {
+dsl.innerHTML = '';
+var labels = ['当前余额', '今日消费', '累计消费'];
+var values = [balance, today, total];
+var fragment = document.createDocumentFragment();
+labels.forEach(function(label, idx) {
+var clone = cloneTemplate('tpl-deepseek-card');
+fillText(clone, '[data-field="count"]', values[idx].toFixed(2));
+fillText(clone, '[data-field="label"]', label);
+fragment.appendChild(clone);
+});
+dsl.appendChild(fragment);
+}
+
 async function loadUserList() {
 if (uload) return;
 renderLoading(ul);
@@ -503,6 +535,23 @@ renderError(stl, '加载失败');
 }
 }
 
+async function loadDeepseekStats() {
+if (dsload) return;
+renderLoading(dsl);
+try {
+var r = await apiCall('/api/admin/deepseek-stats', 'GET');
+if (!r.success) {
+renderError(dsl, r.error || '加载失败');
+return;
+}
+renderDeepseekCards(r.balance, r.today, r.total);
+dsload = true;
+toast.success('DeepSeek 数据加载成功');
+} catch (e) {
+renderError(dsl, '加载失败');
+}
+}
+
 mt.addEventListener('click', function() {
 mopen = !mopen;
 mb.classList.toggle('op');
@@ -525,6 +574,14 @@ stb.classList.toggle('op');
 var a = sta.querySelector('img');
 if (a) a.classList.toggle('rt');
 if (sopen && !sload) loadStats();
+});
+
+dst.addEventListener('click', function() {
+dsopen = !dsopen;
+dsb.classList.toggle('op');
+var a = dsa.querySelector('img');
+if (a) a.classList.toggle('rt');
+if (dsopen && !dsload) loadDeepseekStats();
 });
 
 at.addEventListener('click', function() {

@@ -6,6 +6,8 @@ from datetime import timedelta
 import time
 import os
 from functools import wraps
+import requests
+from datetime import datetime, timezone, timedelta as td
 
 admin_bp = Blueprint('admin', __name__)
 admin_login_attempts = {}
@@ -175,3 +177,34 @@ def admin_get_page_views():
         "total": total,
         "views": [{"path": r[0], "count": r[1], "last_visited": r[2].strftime("%Y-%m-%d %H:%M:%S") if r[2] else None} for r in rows]
     })
+
+@admin_bp.route("/api/admin/deepseek-stats", methods=["GET"])
+@admin_required
+def admin_deepseek_stats():
+    api_key = os.environ.get("API_KEY")
+    if not api_key:
+        return jsonify({"success": False, "error": "API_KEY未配置"}), 500
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    try:
+        r = requests.get("https://api.deepseek.com/v1/dashboard/billing/credit_grants", headers=headers, timeout=10)
+        if r.status_code != 200:
+            return jsonify({"success": False, "error": f"余额查询失败: {r.status_code}"}), 500
+        data = r.json()
+        balance = round(data.get("total_available", 0), 2)
+        total_cost = round(data.get("total_used", 0), 2)
+        tz = timezone(td(hours=8))
+        now = datetime.now(tz)
+        today_start = int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+        today_end = int(now.timestamp())
+        r2 = requests.get(f"https://api.deepseek.com/v1/dashboard/billing/usage?start_time={today_start}&end_time={today_end}", headers=headers, timeout=10)
+        today_cost = 0.0
+        if r2.status_code == 200:
+            usage_data = r2.json()
+            for item in usage_data.get("data", []):
+                today_cost += item.get("cost", 0.0)
+        today_cost = round(today_cost, 2)
+        return jsonify({"success": True, "balance": balance, "today": today_cost, "total": total_cost})
+    except requests.exceptions.Timeout:
+        return jsonify({"success": False, "error": "请求超时"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
