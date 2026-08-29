@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>T8000X - 登录</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 body{background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;position:relative}
 .bg{position:fixed;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,0,0,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03)1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
 .c{width:100%;max-width:340px;margin:0 auto;position:relative;z-index:1;padding:20px 0}
-.i{width:16px;height:16px;display:inline-block;vertical-align:middle;flex-shrink:0;filter:brightness(0)saturate(100%)}
+.i,.iw{width:16px;height:16px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.i{filter:brightness(0)saturate(100%)}
 .iw{filter:brightness(0)invert(1)}
 .il{width:48px;height:48px;display:block;margin:0 auto 6px;filter:brightness(0)saturate(100%)}
 .sp{animation:spn 1s linear infinite;display:inline-block}
@@ -33,13 +35,13 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .captcha-row{display:flex;gap:10px;width:100%;align-items:stretch}
 .input-wrapper{flex:1;display:flex;align-items:center;background:#f8f8f8;border:1px solid #e5e5e5;border-radius:10px;transition:border-color .3s,background .3s;min-width:0;height:42px;padding:0 12px}
 .input-wrapper:focus-within{border-color:#0a0a0a;background:#f5f5f5}
-.input-wrapper .i{margin-right:8px;opacity:.4}
-.input-wrapper input{flex:1;padding:0;background:transparent;border:none;color:#0a0a0a;font-size:14px;outline:none;min-width:0;letter-spacing:2px;font-weight:600;text-transform:uppercase}
-.input-wrapper input::placeholder{color:#999;text-transform:none;font-weight:400;letter-spacing:0;font-size:13px}
-.captcha-img-wrap{position:relative;width:100px;height:42px;border-radius:10px;overflow:hidden;flex-shrink:0;border:2px solid #e5e5e5;background:#f8f8f8;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s}
+.input-wrapper i{color:#888;font-size:16px;margin-left:0;width:20px;text-align:center;flex-shrink:0}
+.input-wrapper input{flex:1;padding:0;background:transparent;border:none;color:#0a0a0a;font-size:15px;outline:none;min-width:0;letter-spacing:2px;font-weight:600;text-transform:uppercase;line-height:42px;height:42px}
+.input-wrapper input::placeholder{color:#999;text-transform:none;font-weight:400;letter-spacing:0}
+.captcha-img-wrap{position:relative;width:130px;height:42px;border-radius:10px;overflow:hidden;flex-shrink:0;border:2px solid #e5e5e5;background:#f8f8f8;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s}
 .captcha-img-wrap:active{border-color:#0a0a0a}
 .captcha-img-wrap img{width:100%;height:100%;object-fit:contain;display:block;border-radius:8px}
-@media (max-width:480px){.captcha-img-wrap{width:100px}}
+@media (max-width:480px){.captcha-img-wrap{width:120px}}
 </style>
 </head>
 <body>
@@ -52,7 +54,7 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 <div class="fg">
     <div class="captcha-row">
         <div class="input-wrapper">
-            <img src="/svg/shield.svg" class="i">
+            <i class="fas fa-shield-alt"></i>
             <input type="text" id="loginCaptcha" placeholder="验证码" maxlength="5" autocomplete="off">
         </div>
         <div class="captcha-img-wrap" onclick="refreshCaptcha()">
@@ -60,7 +62,7 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
         </div>
     </div>
 </div>
-<button class="bt" id="loginBtn"><img src="/svg/enter.svg" class="i iw"> 登录</button>
+<button class="bt" id="loginBtn"><img src="/svg/enter.svg" class="iw"> 登录</button>
 </div>
 <script src="/api/toast.js"></script>
 <script>
@@ -97,7 +99,7 @@ async function refreshCaptcha() {
         if(!ca){ toast.error('请输入验证码'); return; }
         if(!captchaToken){ toast.error('验证码未加载，请点击刷新'); return; }
         btn.disabled=true;
-        btn.innerHTML='<img src="/svg/loading.svg" class="i sp iw"> 登录中...';
+        btn.innerHTML='<img src="/svg/loading.svg" class="iw sp"> 登录中...';
         const r=await api('/api/login','POST',{username:un,password:pw,captcha:ca,captcha_token:captchaToken});
         if(r.success){
             toast.success(r.message);
@@ -105,7 +107,7 @@ async function refreshCaptcha() {
         }else{
             toast.error(r.error||'登录失败');
             btn.disabled=false;
-            btn.innerHTML='<img src="/svg/enter.svg" class="i iw"> 登录';
+            btn.innerHTML='<img src="/svg/enter.svg" class="iw"> 登录';
             refreshCaptcha();
         }
     });
