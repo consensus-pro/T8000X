@@ -10,7 +10,6 @@ from PIL import Image, ImageDraw, ImageFont
 captcha_bp = Blueprint('captcha', __name__)
 captcha_store = {}
 
-# 定位字体文件（您放在 api/Plus.ttf）
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 font_paths = [
     os.path.join(base_dir, 'api', 'Plus.ttf'),
@@ -21,7 +20,7 @@ font = None
 for path in font_paths:
     if os.path.exists(path):
         try:
-            font = ImageFont.truetype(path, 32)  # 字体大小改为 32px
+            font = ImageFont.truetype(path, 26)
             break
         except:
             continue
@@ -36,7 +35,7 @@ def get_captcha():
     token = hashlib.md5(f"{text}{time.time()}{random.random()}".encode()).hexdigest()
     captcha_store[token] = text
 
-    width, height = 150, 50  # 缩小图片尺寸
+    width, height = 130, 42
     image = Image.new('RGB', (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(image)
 
@@ -45,24 +44,22 @@ def get_captcha():
     try:
         char_widths = [font.getbbox(ch)[2] - font.getbbox(ch)[0] for ch in text]
     except:
-        char_widths = [20] * len(text)
-    spacing = 8  # 减小间距
+        char_widths = [16] * len(text)
+    spacing = 4
     total_width = sum(char_widths) + spacing * (len(text) - 1)
     start_x = (width - total_width) // 2
 
     for i, ch in enumerate(text):
         x = start_x + sum(char_widths[:i]) + spacing * i
-        y = 12  # 垂直居中，字体32px，图片高50，y=12左右
+        y = 10
         draw.text((x, y), ch, font=font, fill=colors[i % len(colors)])
 
-    # 干扰线（减淡）
     for _ in range(2):
         draw.line([(random.randint(0, width), random.randint(0, height)),
                    (random.randint(0, width), random.randint(0, height))],
                   fill=(220, 220, 220), width=1)
 
-    # 噪点（减少）
-    for _ in range(20):
+    for _ in range(15):
         draw.point((random.randint(0, width), random.randint(0, height)), fill=(200, 200, 200))
 
     img_io = io.BytesIO()
