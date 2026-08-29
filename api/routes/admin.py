@@ -186,12 +186,17 @@ def admin_deepseek_stats():
         return jsonify({"success": False, "error": "API_KEY未配置"}), 500
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     try:
-        r = requests.get("https://api.deepseek.com/v1/dashboard/billing/credit_grants", headers=headers, timeout=10)
+        r = requests.get("https://api.deepseek.com/v1/user/balance", headers=headers, timeout=10)
         if r.status_code != 200:
             return jsonify({"success": False, "error": f"余额查询失败: {r.status_code}"}), 500
         data = r.json()
-        balance = round(data.get("total_available", 0), 2)
-        total_cost = round(data.get("total_used", 0), 2)
+        if not data.get("is_available") or not data.get("balance_infos"):
+            return jsonify({"success": False, "error": "余额数据格式异常"}), 500
+        info = data["balance_infos"][0]
+        balance = round(float(info.get("total_balance", 0)), 2)
+        topped = float(info.get("topped_up_balance", 0))
+        granted = float(info.get("granted_balance", 0))
+        total_cost = round(topped + granted - balance, 2)
         tz = timezone(td(hours=8))
         now = datetime.now(tz)
         today_start = int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
