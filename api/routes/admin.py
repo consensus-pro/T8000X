@@ -33,6 +33,11 @@ def admin_login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
+    captcha = data.get("captcha", "").strip().upper()
+
+    if not captcha or captcha != session.get("captcha", ""):
+        return jsonify({"success": False, "error": "验证码错误"}), 400
+    session.pop("captcha", None)
 
     if not username or not password:
         return jsonify({"success": False, "error": "账号和密码必填"}), 400
