@@ -28,6 +28,10 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 .iwr .i{margin-right:8px;opacity:.4}
 .iwr input{flex:1;padding:8px 0;background:transparent;border:none;color:#0a0a0a;font-size:14px;outline:none;min-width:0}
 .iwr input::placeholder{color:#999;font-size:13px}
+.captcha-wrapper{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.captcha-wrapper img{height:42px;border-radius:6px;border:1px solid #ddd;background:#fff;flex-shrink:0}
+.captcha-wrapper .refresh-btn{background:#f0f0f0;border:1px solid #ddd;border-radius:6px;padding:0 12px;height:42px;cursor:pointer;font-size:14px;font-weight:600;color:#333;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:background .2s}
+.captcha-wrapper .refresh-btn:hover{background:#e5e5e5}
 .bt{width:100%;height:36px;min-height:36px;line-height:36px;padding:0 10px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .3s ease;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
 .bt:hover{background:#222}
 .bt:disabled{background:#555;color:#fff;cursor:not-allowed}
@@ -40,13 +44,113 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
 <div class="ts"><a class="ac" href="/login">登录</a><a href="/register">注册</a></div>
 <div class="fg"><div class="iwr"><img src="/svg/user.svg" class="i"><input type="text" id="loginUsername" placeholder="请输入账号"></div></div>
 <div class="fg"><div class="iwr"><img src="/svg/lock.svg" class="i"><input type="password" id="loginPassword" placeholder="请输入密码"></div></div>
+
+<!-- 验证码区域 -->
+<div class="fg">
+  <div class="captcha-wrapper">
+    <img id="captchaImage" src="" alt="验证码">
+    <button class="refresh-btn" id="refreshCaptchaBtn">⟳ 刷新</button>
+  </div>
+  <div class="iwr">
+    <img src="/svg/shield.svg" class="i">
+    <input type="text" id="captchaInput" placeholder="输入验证码" maxlength="4" style="text-transform:uppercase; letter-spacing:2px;">
+  </div>
+</div>
+
 <button class="bt" id="loginBtn"><img src="/svg/enter.svg" class="iw"> 登录</button>
 </div>
 <script src="/api/toast.js"></script>
 <script>
-!function(){const $=id=>document.getElementById(id),u=$('loginUsername'),p=$('loginPassword'),btn=$('loginBtn');const api=async(url,method,body)=>{const opts={method:method||'GET',headers:{'Content-Type':'application/json'},credentials:'include'};if(body)opts.body=JSON.stringify(body);const r=await fetch(url,opts);return await r.json()};
-btn.addEventListener('click',async()=>{const un=u.value.trim(),pw=p.value.trim();if(!un||!pw){toast.error('请填写账号和密码');return}btn.disabled=true;btn.innerHTML='<img src="/svg/loading.svg" class="iw sp"> 登录中...';const r=await api('/api/login','POST',{username:un,password:pw});if(r.success){toast.success(r.message);setTimeout(()=>{window.location.href='/'},600)}else{toast.error(r.error||'登录失败');btn.disabled=false;btn.innerHTML='<img src="/svg/enter.svg" class="iw"> 登录'}});
-p.addEventListener('keydown',e=>{if(e.key==='Enter')btn.click()})}();
+!function(){
+    const $ = id => document.getElementById(id);
+    const u = $('loginUsername');
+    const p = $('loginPassword');
+    const btn = $('loginBtn');
+    const captchaImg = $('captchaImage');
+    const captchaInput = $('captchaInput');
+    const refreshBtn = $('refreshCaptchaBtn');
+
+    const api = async (url, method, body) => {
+        const opts = {
+            method: method || 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const r = await fetch(url, opts);
+        return await r.json();
+    };
+
+    // 加载验证码
+    async function loadCaptcha() {
+        try {
+            const res = await fetch('/api/captcha', { credentials: 'include' });
+            const data = await res.json();
+            if (data.code === 0 && data.data) {
+                captchaImg.src = data.data.image;
+                sessionStorage.setItem('captcha_token', data.data.captcha_token);
+                captchaInput.value = '';
+                captchaInput.focus();
+            } else {
+                toast.error('获取验证码失败');
+            }
+        } catch (e) {
+            toast.error('网络错误，无法加载验证码');
+        }
+    }
+
+    // 刷新按钮
+    refreshBtn.addEventListener('click', loadCaptcha);
+
+    // 登录
+    btn.addEventListener('click', async () => {
+        const un = u.value.trim();
+        const pw = p.value.trim();
+        const captchaCode = captchaInput.value.trim().toUpperCase();
+        const captchaToken = sessionStorage.getItem('captcha_token') || '';
+
+        if (!un || !pw) {
+            toast.error('请填写账号和密码');
+            return;
+        }
+        if (!captchaToken || !captchaCode) {
+            toast.error('请完成图形验证码');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<img src="/svg/loading.svg" class="iw sp"> 登录中...';
+
+        const r = await api('/api/login', 'POST', {
+            username: un,
+            password: pw,
+            captcha_token: captchaToken,
+            captcha_code: captchaCode
+        });
+
+        if (r.success) {
+            toast.success(r.message);
+            setTimeout(() => { window.location.href = '/' }, 600);
+        } else {
+            toast.error(r.error || '登录失败');
+            // 验证失败，刷新验证码
+            loadCaptcha();
+            btn.disabled = false;
+            btn.innerHTML = '<img src="/svg/enter.svg" class="iw"> 登录';
+        }
+    });
+
+    // 回车登录
+    p.addEventListener('keydown', e => {
+        if (e.key === 'Enter') btn.click();
+    });
+    captchaInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') btn.click();
+    });
+
+    // 页面加载时获取验证码
+    loadCaptcha();
+}();
 </script>
 </body>
 </html>

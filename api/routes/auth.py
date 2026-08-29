@@ -4,9 +4,17 @@ from psycopg2.extras import RealDictCursor
 from ..utils import get_db, generate_code, is_valid_email, is_allowed_email
 import re
 from datetime import datetime, timezone, timedelta
+import random
+import string
+import time
+import secrets
+import io
+import base64
+from PIL import Image, ImageDraw, ImageFont
 
 auth_bp = Blueprint('auth', __name__)
 
+# ---------- 原有路由 ----------
 @auth_bp.route("/")
 def index():
     if session.get("username"):
@@ -149,12 +157,100 @@ def register():
 
     return jsonify({"success": True, "message": "注册成功"})
 
+# ---------- 新增：获取图形验证码 ----------
+@auth_bp.route("/api/captcha", methods=["GET"])
+def get_captcha():
+    # 初始化 session 中的 captcha 存储（如果不存在）
+    if 'captcha' not in session:
+        session['captcha'] = {}
+
+    # 生成 4 位验证码（排除易混淆字符 0, O, I, 1）
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    code = ''.join(random.choices(chars, k=4))
+
+    # 生成唯一 token
+    token = secrets.token_hex(16)
+    # 存储验证码和生成时间（用于过期判断）
+    session['captcha'][token] = {
+        'code': code,
+        'time': int(time.time())
+    }
+
+    # ---------- 生成图片 ----------
+    width, height = 120, 40
+    image = Image.new('RGB', (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+
+    # 尝试加载系统字体，如果失败则使用默认字体
+    try:
+        # 这里可换成你的字体路径，例如 'arial.ttf'
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+    except:
+        font = ImageFont.load_default()
+
+    # 画字符（每个字符位置随机偏移）
+    for i, ch in enumerate(code):
+        x = 15 + i * 25 + random.randint(-5, 5)
+        y = random.randint(5, 15)
+        draw.text((x, y), ch, fill=(0, 0, 0), font=font)
+
+    # 干扰线
+    for _ in range(3):
+        draw.line([
+            (random.randint(0, width), random.randint(0, height)),
+            (random.randint(0, width), random.randint(0, height))
+        ], fill=(100, 100, 100))
+
+    # 噪点
+    for _ in range(30):
+        draw.point((random.randint(0, width), random.randint(0, height)), fill=(0, 0, 0))
+
+    # 转 Base64
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    img_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+    return jsonify({
+        "code": 0,
+        "data": {
+            "captcha_token": token,
+            "image": "data:image/png;base64," + img_base64,
+            "server_time": int(time.time())
+        }
+    })
+
+# ---------- 修改后的登录接口（增加验证码校验） ----------
 @auth_bp.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
+    captcha_token = data.get("captcha_token")
+    captcha_code = data.get("captcha_code", "").strip().upper()
 
+    # ---- 图形验证码校验 ----
+    if not captcha_token or not captcha_code:
+        return jsonify({"success": False, "error": "请完成图形验证码"}), 400
+
+    # 从 session 中取出存储的验证码
+    captcha_data = session.get('captcha', {}).get(captcha_token)
+    if not captcha_data:
+        return jsonify({"success": False, "error": "验证码已过期，请刷新"}), 400
+
+    # 检查是否超时（5分钟）
+    if int(time.time()) - captcha_data['time'] > 300:
+        session['captcha'].pop(captcha_token, None)
+        return jsonify({"success": False, "error": "验证码已过期，请刷新"}), 400
+
+    if captcha_data['code'] != captcha_code:
+        # 验证失败，删除该 token（防止暴力重试）
+        session['captcha'].pop(captcha_token, None)
+        return jsonify({"success": False, "error": "验证码错误"}), 400
+
+    # 验证通过，删除已使用的验证码
+    session['captcha'].pop(captcha_token, None)
+
+    # ---------- 账号密码验证 ----------
     if not username or not password:
         return jsonify({"success": False, "error": "账号或密码未填"}), 400
 
