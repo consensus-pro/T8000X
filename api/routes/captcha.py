@@ -62,7 +62,6 @@ def get_captcha():
         draw.text((x, y), ch, font=font, fill=colors[i % len(colors)])
         x += char_width + spacing
 
-    # 简化的干扰（仅1条线 + 8个噪点，提速）
     draw.line([(random.randint(0, width), random.randint(0, height)),
                (random.randint(0, width), random.randint(0, height))],
               fill=(220, 220, 220), width=1)

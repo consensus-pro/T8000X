@@ -55,7 +55,7 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
             <input type="text" id="loginCaptcha" placeholder="验证码" maxlength="5" autocomplete="off" oninput="if(this.value.length>=5) this.blur();">
         </div>
         <div class="captcha-img-wrap" onclick="refreshCaptcha()">
-            <img id="captchaImg" src="" alt="验证码">
+            <img id="captchaImg" src="">
         </div>
     </div>
 </div>
@@ -72,11 +72,10 @@ async function refreshCaptcha() {
         if (data.code === 0) {
             document.getElementById('captchaImg').src = data.data.image;
             captchaToken = data.data.captcha_token;
-        } else {
-            toast.error('验证码加载失败');
         }
+        // 静默失败
     } catch (e) {
-        toast.error('网络错误，请重试');
+        // 静默失败
     }
 }
 
@@ -92,7 +91,6 @@ async function refreshCaptcha() {
 
     btn.addEventListener('click',async ()=>{
         const un=u.value.trim(), pw=p.value.trim(), ca=c.value.trim();
-        if(!un||!pw){ toast.error('请填写账号和密码'); return; }
         if(!ca){ toast.error('请输入验证码'); return; }
         if(!captchaToken){ toast.error('验证码未加载，请点击刷新'); return; }
         btn.disabled=true;

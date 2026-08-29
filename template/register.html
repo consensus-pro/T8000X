@@ -62,7 +62,7 @@ body{background:#fff;display:flex;justify-content:center;align-items:center;min-
             <input type="text" id="regCaptcha" placeholder="图片验证码" maxlength="5" autocomplete="off" oninput="if(this.value.length>=5) this.blur();">
         </div>
         <div class="captcha-img-wrap" onclick="refreshCaptcha()">
-            <img id="captchaImg" src="" alt="验证码">
+            <img id="captchaImg" src="">
         </div>
     </div>
 </div>
@@ -80,11 +80,10 @@ async function refreshCaptcha() {
         if (data.code === 0) {
             document.getElementById('captchaImg').src = data.data.image;
             captchaToken = data.data.captcha_token;
-        } else {
-            toast.error('验证码加载失败');
         }
+        // 静默失败
     } catch (e) {
-        toast.error('网络错误，请重试');
+        // 静默失败
     }
 }
 
