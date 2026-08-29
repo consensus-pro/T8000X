@@ -28,7 +28,7 @@ def get_captcha():
     token = hashlib.md5(f"{text}{time.time()}{random.random()}".encode()).hexdigest()
     captcha_store[token] = text
 
-    width, height = 100, 50
+    width, height = 100, 42
     image = Image.new('RGB', (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(image)
 
@@ -36,8 +36,8 @@ def get_captcha():
 
     char_data = []
     for ch in text:
-        size = random.randint(16, 26)
-        y_offset = random.randint(-3, 3)
+        size = random.randint(14, 22)
+        y_offset = random.randint(-2, 2)
         if font_available:
             try:
                 font = ImageFont.truetype(font_path, size)
@@ -49,7 +49,7 @@ def get_captcha():
             bbox = font.getbbox(ch)
             char_width = bbox[2] - bbox[0]
         except:
-            char_width = 14
+            char_width = 12
         char_data.append((ch, font, char_width, y_offset))
 
     spacing = 2
@@ -58,16 +58,16 @@ def get_captcha():
 
     x = start_x
     for i, (ch, font, char_width, y_offset) in enumerate(char_data):
-        y = 14 + y_offset  # 50px 高度居中
+        y = 11 + y_offset
         draw.text((x, y), ch, font=font, fill=colors[i % len(colors)])
         x += char_width + spacing
 
-    for _ in range(2):
-        draw.line([(random.randint(0, width), random.randint(0, height)),
-                   (random.randint(0, width), random.randint(0, height))],
-                  fill=(220, 220, 220), width=1)
+    # 简化的干扰（仅1条线 + 8个噪点，提速）
+    draw.line([(random.randint(0, width), random.randint(0, height)),
+               (random.randint(0, width), random.randint(0, height))],
+              fill=(220, 220, 220), width=1)
 
-    for _ in range(15):
+    for _ in range(8):
         draw.point((random.randint(0, width), random.randint(0, height)), fill=(200, 200, 200))
 
     img_io = io.BytesIO()
