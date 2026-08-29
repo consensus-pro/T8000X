@@ -2,155 +2,102 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>T8000X - 登录</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
-body{background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;position:relative}
-.bg{position:fixed;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,0,0,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03)1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
-.c{width:100%;max-width:340px;margin:0 auto;position:relative;z-index:1;padding:20px 0}
-.i,.iw{width:16px;height:16px;display:inline-block;vertical-align:middle;flex-shrink:0}
-.i{filter:brightness(0)saturate(100%)}
-.iw{filter:brightness(0)invert(1)}
-.il{width:48px;height:48px;display:block;margin:0 auto 6px;filter:brightness(0)saturate(100%)}
-.sp{animation:spn 1s linear infinite;display:inline-block}
-@keyframes spn{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.ls{text-align:center;margin-bottom:18px}
-.ls .lt{font-size:18px;font-weight:700;color:#0a0a0a;letter-spacing:.5px}
-.ts{display:flex;gap:0;margin-bottom:18px;background:#f0f0f0;border-radius:8px;padding:3px}
-.ts a{flex:1;padding:7px 0;text-align:center;background:transparent;color:#888;font-size:13px;font-weight:600;cursor:pointer;border-radius:6px;transition:all .3s ease;text-decoration:none}
-.ts a.ac{background:#0a0a0a;color:#fff}
-.ts a:hover{color:#0a0a0a}
-.ts a.ac:hover{color:#fff}
-.fg{margin-bottom:10px}
-.iwr{display:flex;align-items:center;background:#f5f5f7;border:1px solid #e5e5ea;border-radius:8px;transition:all .3s ease;padding:0 12px;height:42px}
-.iwr:focus-within{border-color:#0a0a0a;background:#f0f0f2}
-.iwr .i{margin-right:8px;opacity:.4}
-.iwr input{flex:1;padding:8px 0;background:transparent;border:none;color:#0a0a0a;font-size:14px;outline:none;min-width:0}
-.iwr input::placeholder{color:#999;font-size:13px}
-.captcha-wrapper{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.captcha-wrapper img{height:42px;border-radius:6px;border:1px solid #ddd;background:#fff;flex-shrink:0}
-.captcha-wrapper .refresh-btn{background:#f0f0f0;border:1px solid #ddd;border-radius:6px;padding:0 12px;height:42px;cursor:pointer;font-size:14px;font-weight:600;color:#333;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:background .2s}
-.captcha-wrapper .refresh-btn:hover{background:#e5e5e5}
-.bt{width:100%;height:36px;min-height:36px;line-height:36px;padding:0 10px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .3s ease;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
-.bt:hover{background:#222}
-.bt:disabled{background:#555;color:#fff;cursor:not-allowed}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#fff;color:#0a0a0a;overflow:hidden}
+.header-bar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:center;z-index:1000;padding:0 20px}
+.header-bar .back-btn{position:absolute;left:16px;color:#666;text-decoration:none;font-size:18px;transition:color .2s}
+.header-bar .back-btn:hover{color:#0a0a0a}
+.header-bar .title{font-size:17px;font-weight:600;letter-spacing:.5px}
+.main-container{height:100vh;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px 24px;position:relative}
+.bg-grid{position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,0,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
+.logo-section{text-align:center;margin-bottom:32px;position:relative;z-index:1}
+.logo-section img{width:80px;height:80px;object-fit:contain;margin-bottom:16px}
+.logo-section h1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+.logo-section p{font-size:13px;color:#888}
+.form-container{width:100%;max-width:360px;position:relative;z-index:1}
+.form-group{margin-bottom:14px}
+.input-wrapper{position:relative;display:flex;align-items:center;background:#f8f8f8;border:1px solid #e5e5e5;border-radius:10px;transition:all .3s ease;min-width:0}
+.input-wrapper:focus-within{border-color:#0a0a0a;background:#f5f5f5}
+.input-wrapper i{color:#888;font-size:16px;margin-left:14px;width:20px;text-align:center;flex-shrink:0}
+.input-wrapper input{flex:1;padding:12px 12px;background:transparent;border:none;color:#0a0a0a;font-size:15px;outline:none;min-width:0}
+.input-wrapper input::placeholder{color:#999}
+.captcha-row{display:flex;gap:10px;width:100%;min-width:0;align-items:stretch}
+.captcha-row .captcha-input{flex:1;min-width:0}
+.captcha-row .captcha-input input{width:100%;letter-spacing:2px;font-weight:600;text-transform:uppercase}
+.captcha-img-wrap{position:relative;width:120px;min-height:46px;border-radius:10px;overflow:hidden;cursor:pointer;flex-shrink:0;border:1px solid #e5e5e5;background:#f8f8f8;transition:border-color .2s,opacity .2s;display:flex;align-items:center;justify-content:center}
+.captcha-img-wrap:hover{border-color:#0a0a0a}
+.captcha-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;border-radius:10px;transition:opacity .2s;min-height:46px}
+.captcha-img-wrap.loading img{opacity:.2}
+.captcha-refresh-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.05);opacity:0;transition:opacity .2s;border-radius:10px;pointer-events:none}
+.captcha-img-wrap:hover .captcha-refresh-overlay{opacity:1}
+.captcha-refresh-overlay i{color:#666;font-size:14px}
+.captcha-img-wrap.loading .captcha-refresh-overlay{opacity:1;background:rgba(0,0,0,0.1)}
+.captcha-img-wrap.loading .captcha-refresh-overlay i{animation:spin .6s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.submit-btn{width:100%;padding:14px;background:#0a0a0a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:background .3s ease;display:flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn:hover{background:#222}
+.submit-btn:disabled{background:#e5e5e5;color:#999;cursor:not-allowed}
+.footer-hint{position:absolute;bottom:24px;left:0;right:0;text-align:center;color:#999;font-size:12px;z-index:1}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:#0a0a0a;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:all .3s ease;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.15);max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:480px){.logo-section img{width:64px;height:64px}.logo-section h1{font-size:20px}.captcha-img-wrap{width:100px;min-height:42px}.captcha-img-wrap img{min-height:42px}.captcha-row .captcha-input input{font-size:14px}}
+@media (max-width:360px){.captcha-img-wrap{width:90px}.captcha-row{gap:6px}}
 </style>
 </head>
 <body>
-<div class="bg"></div>
-<div class="c">
-<div class="ls"><img src="/svg/icon.svg" class="il"><div class="lt">T8000X网络</div></div>
-<div class="ts"><a class="ac" href="/login">登录</a><a href="/register">注册</a></div>
-<div class="fg"><div class="iwr"><img src="/svg/user.svg" class="i"><input type="text" id="loginUsername" placeholder="请输入账号"></div></div>
-<div class="fg"><div class="iwr"><img src="/svg/lock.svg" class="i"><input type="password" id="loginPassword" placeholder="请输入密码"></div></div>
-
-<!-- 验证码区域 -->
-<div class="fg">
-  <div class="captcha-wrapper">
-    <img id="captchaImage" src="" alt="验证码">
-    <button class="refresh-btn" id="refreshCaptchaBtn">⟳ 刷新</button>
-  </div>
-  <div class="iwr">
-    <img src="/svg/shield.svg" class="i">
-    <input type="text" id="captchaInput" placeholder="输入验证码" maxlength="4" style="text-transform:uppercase; letter-spacing:2px;">
-  </div>
+<div class="header-bar">
+<a href="/" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+<span class="title">登录您的账号</span>
 </div>
-
-<button class="bt" id="loginBtn"><img src="/svg/enter.svg" class="iw"> 登录</button>
+<div class="main-container">
+<div class="bg-grid"></div>
+<div class="logo-section">
+<img src="/svg/icon.svg" alt="Logo">
+<h1>T8000X</h1>
+<p>欢迎回来</p>
 </div>
-<script src="/api/toast.js"></script>
+<div class="form-container" id="login-form">
+<div class="form-group">
+<div class="input-wrapper">
+<i class="fas fa-user"></i>
+<input type="text" id="login-identifier" placeholder="账号" autocomplete="username">
+</div>
+</div>
+<div class="form-group">
+<div class="input-wrapper">
+<i class="fas fa-lock"></i>
+<input type="password" id="login-password" placeholder="密码" autocomplete="current-password">
+</div>
+</div>
+<div class="form-group">
+<div class="captcha-row">
+<div class="input-wrapper captcha-input">
+<i class="fas fa-shield-alt"></i>
+<input type="text" id="login-captcha" placeholder="验证码" maxlength="4" autocomplete="off">
+</div>
+<div class="captcha-img-wrap" id="loginCaptchaWrap" onclick="refreshCaptcha()">
+<img id="loginCaptchaImg" src="" alt="验证码">
+<div class="captcha-refresh-overlay"><i class="fas fa-sync-alt"></i></div>
+</div>
+</div>
+</div>
+<button class="submit-btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> 立即登录</button>
+</div>
+<div class="footer-hint">登录即表示您同意服务条款和隐私政策</div>
+</div>
+<div class="toast" id="toast"></div>
 <script>
-!function(){
-    const $ = id => document.getElementById(id);
-    const u = $('loginUsername');
-    const p = $('loginPassword');
-    const btn = $('loginBtn');
-    const captchaImg = $('captchaImage');
-    const captchaInput = $('captchaInput');
-    const refreshBtn = $('refreshCaptchaBtn');
-
-    const api = async (url, method, body) => {
-        const opts = {
-            method: method || 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-        };
-        if (body) opts.body = JSON.stringify(body);
-        const r = await fetch(url, opts);
-        return await r.json();
-    };
-
-    // 加载验证码
-    async function loadCaptcha() {
-        try {
-            const res = await fetch('/api/captcha', { credentials: 'include' });
-            const data = await res.json();
-            if (data.code === 0 && data.data) {
-                captchaImg.src = data.data.image;
-                sessionStorage.setItem('captcha_token', data.data.captcha_token);
-                captchaInput.value = '';
-                captchaInput.focus();
-            } else {
-                toast.error('获取验证码失败');
-            }
-        } catch (e) {
-            toast.error('网络错误，无法加载验证码');
-        }
-    }
-
-    // 刷新按钮
-    refreshBtn.addEventListener('click', loadCaptcha);
-
-    // 登录
-    btn.addEventListener('click', async () => {
-        const un = u.value.trim();
-        const pw = p.value.trim();
-        const captchaCode = captchaInput.value.trim().toUpperCase();
-        const captchaToken = sessionStorage.getItem('captcha_token') || '';
-
-        if (!un || !pw) {
-            toast.error('请填写账号和密码');
-            return;
-        }
-        if (!captchaToken || !captchaCode) {
-            toast.error('请完成图形验证码');
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerHTML = '<img src="/svg/loading.svg" class="iw sp"> 登录中...';
-
-        const r = await api('/api/login', 'POST', {
-            username: un,
-            password: pw,
-            captcha_token: captchaToken,
-            captcha_code: captchaCode
-        });
-
-        if (r.success) {
-            toast.success(r.message);
-            setTimeout(() => { window.location.href = '/' }, 600);
-        } else {
-            toast.error(r.error || '登录失败');
-            // 验证失败，刷新验证码
-            loadCaptcha();
-            btn.disabled = false;
-            btn.innerHTML = '<img src="/svg/enter.svg" class="iw"> 登录';
-        }
-    });
-
-    // 回车登录
-    p.addEventListener('keydown', e => {
-        if (e.key === 'Enter') btn.click();
-    });
-    captchaInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') btn.click();
-    });
-
-    // 页面加载时获取验证码
-    loadCaptcha();
-}();
+function showToast(msg,duration){duration=duration||2500;var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},duration)}
+var captchaToken='';
+function refreshCaptcha(){var img=document.getElementById('loginCaptchaImg'),wrap=document.getElementById('loginCaptchaWrap');if(!img||!wrap)return;wrap.classList.add('loading');fetch('/api/captcha',{credentials:'include'}).then(function(r){return r.json()}).then(function(d){wrap.classList.remove('loading');if(d.code===0&&d.data){img.src=d.data.image;captchaToken=d.data.captcha_token;img.style.opacity='1';document.getElementById('login-captcha').value='';document.getElementById('login-captcha').focus()}else{img.style.opacity='0.3';showToast(d.msg||'验证码加载失败');setTimeout(refreshCaptcha,1000)}}).catch(function(){wrap.classList.remove('loading');img.style.opacity='0.3';showToast('加载失败，点击重试');setTimeout(refreshCaptcha,1500)})}
+document.getElementById('loginBtn').addEventListener('click',function(){var un=document.getElementById('login-identifier').value.trim(),pw=document.getElementById('login-password').value.trim(),code=document.getElementById('login-captcha').value.trim().toUpperCase();if(!un||!pw){showToast('请填写账号和密码');return}if(!captchaToken||!code){showToast('请完成图形验证码');return}var btn=this;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>登录中...';fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:un,password:pw,captcha_token:captchaToken,captcha_code:code})}).then(function(r){return r.json()}).then(function(d){if(d.success){showToast(d.message);setTimeout(function(){window.location.href='/'},600)}else{showToast(d.error||'登录失败');refreshCaptcha();document.getElementById('login-captcha').value='';btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> 立即登录'}}).catch(function(){showToast('网络错误');btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> 立即登录'})});
+document.getElementById('login-password').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginBtn').click()});
+document.getElementById('login-captcha').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginBtn').click()});
+document.addEventListener('DOMContentLoaded',refreshCaptcha);
 </script>
 </body>
 </html>
