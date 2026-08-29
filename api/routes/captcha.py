@@ -28,7 +28,7 @@ def get_captcha():
     token = hashlib.md5(f"{text}{time.time()}{random.random()}".encode()).hexdigest()
     captcha_store[token] = text
 
-    width, height = 130, 42
+    width, height = 100, 50
     image = Image.new('RGB', (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(image)
 
@@ -36,7 +36,7 @@ def get_captcha():
 
     char_data = []
     for ch in text:
-        size = random.randint(16, 26)  # 随机大小 16~26px
+        size = random.randint(16, 26)
         y_offset = random.randint(-3, 3)
         if font_available:
             try:
@@ -52,13 +52,13 @@ def get_captcha():
             char_width = 14
         char_data.append((ch, font, char_width, y_offset))
 
-    spacing = 3
+    spacing = 2
     total_width = sum([cd[2] for cd in char_data]) + spacing * (len(char_data) - 1)
     start_x = (width - total_width) // 2
 
     x = start_x
     for i, (ch, font, char_width, y_offset) in enumerate(char_data):
-        y = 12 + y_offset
+        y = 14 + y_offset  # 50px 高度居中
         draw.text((x, y), ch, font=font, fill=colors[i % len(colors)])
         x += char_width + spacing
 
