@@ -4,7 +4,6 @@ from ..utils import get_db
 import html
 import pusher
 import os
-import requests
 import oss2
 import uuid
 
@@ -24,7 +23,7 @@ def get_messages():
     if not username:
         return jsonify({"success": False, "error": "未登录"}), 401
 
-    limit = request.args.get("limit", default=50, type=int)
+    limit = request.args.get("limit", default=20, type=int)
     offset = request.args.get("offset", default=0, type=int)
     if limit > 100:
         limit = 100
@@ -139,7 +138,6 @@ def upload_image():
     OSS_ACCESS_KEY_SECRET = os.environ.get("OSS_ACCESS_KEY_SECRET")
     OSS_ENDPOINT = os.environ.get("OSS_ENDPOINT")
     OSS_BUCKET_NAME = os.environ.get("OSS_BUCKET_NAME")
-    OSS_BASE_URL = os.environ.get("OSS_BASE_URL")
 
     if not all([OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET, OSS_ENDPOINT, OSS_BUCKET_NAME]):
         return jsonify({"success": False, "error": "OSS配置未完整"}), 500
@@ -151,10 +149,7 @@ def upload_image():
         ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
         new_filename = f"{uuid.uuid4().hex}.{ext}"
         bucket.put_object(new_filename, file_bytes)
-        if OSS_BASE_URL:
-            image_url = f"{OSS_BASE_URL.rstrip('/')}/{new_filename}"
-        else:
-            image_url = f"https://{OSS_BUCKET_NAME}.{OSS_ENDPOINT}/{new_filename}"
+        image_url = f"https://{OSS_BUCKET_NAME}.{OSS_ENDPOINT}/{new_filename}"
     except Exception as e:
         return jsonify({"success": False, "error": f"OSS上传失败: {str(e)}"}), 500
 

@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, session, render_template
-from werkzeug.security import generate_password_hash
 from psycopg2.extras import RealDictCursor
 from ..utils import get_db
 from datetime import timedelta, datetime, timezone

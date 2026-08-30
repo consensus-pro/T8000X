@@ -5,6 +5,14 @@ from .utils import return_db_conn
 
 app = create_app()
 
+with app.app_context():
+    try:
+        from .utils import get_db, return_db_conn
+        conn = get_db()
+        return_db_conn()
+    except Exception:
+        pass
+
 @app.route('/svg/<path:filename>')
 def serve_svg(filename):
     svg_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'svg')
@@ -28,6 +36,8 @@ def after_request(response):
     if response.status_code == 200 and request.method == 'GET':
         from .utils import update_page_view
         update_page_view(request.path)
+    if request.path.startswith(('/svg/', '/template/style.css', '/api/toast.js')):
+        response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
 
 @app.teardown_appcontext

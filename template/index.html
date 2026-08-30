@@ -288,7 +288,7 @@ var channelBound = false;
 var longPress = null;
 var historyLoaded = false;
 var currentOffset = 0;
-var pageSize = 50;
+var pageSize = 20;
 var hasMore = true;
 var isLoading = false;
 var firstLoad = true;
@@ -850,28 +850,61 @@ mi.addEventListener('focus', function() {
   }
 });
 
-fetch('/api/user', { credentials: 'include' })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (d.success) {
-      un = d.username;
-      hu.textContent = un;
-      if (d.qq_number) {
-        myAvatar = 'https://q1.qlogo.cn/g?b=qq&nk=' + d.qq_number + '&s=640';
-      } else {
-        myAvatar = null;
-      }
-      updateHeaderAvatar(myAvatar);
-      loadHistory();
-      initPusher();
-      checkAnnouncement();
-    } else {
-      window.location.href = '/login';
-    }
-  })
-  .catch(function() {
+var initStart = performance.now();
+
+Promise.all([
+  fetch('/api/user', { credentials: 'include' }),
+  fetch('/api/messages?limit=20', { credentials: 'include' })
+])
+.then(function(responses) {
+  return Promise.all([responses[0].json(), responses[1].json()]);
+})
+.then(function(results) {
+  var userData = results[0];
+  var messagesData = results[1];
+  if (!userData.success) {
     window.location.href = '/login';
-  });
+    return;
+  }
+  un = userData.username;
+  hu.textContent = un;
+  if (userData.qq_number) {
+    myAvatar = 'https://q1.qlogo.cn/g?b=qq&nk=' + userData.qq_number + '&s=640';
+  } else {
+    myAvatar = null;
+  }
+  updateHeaderAvatar(myAvatar);
+
+  if (messagesData.success && messagesData.messages) {
+    mc.innerHTML = '';
+    var msgs = messagesData.messages;
+    if (msgs.length === 0) {
+      showEmpty();
+    } else {
+      msgs.forEach(function(msg) {
+        var t = new Date(msg.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        addMessage(msg.username, msg.content, t, msg.avatar_url, msg.username === un);
+      });
+      if (msgs.length < pageSize) {
+        hasMore = false;
+        showNoMore();
+      }
+      mc.scrollTop = mc.scrollHeight;
+    }
+    historyLoaded = true;
+    firstLoad = false;
+    toast.success('数据库连接成功');
+  } else {
+    toast.error('加载消息失败');
+  }
+
+  initPusher();
+  setTimeout(checkAnnouncement, 2000);
+})
+.catch(function() {
+  window.location.href = '/login';
+});
+
 </script>
 </body>
 </html>
