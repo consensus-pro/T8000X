@@ -78,7 +78,6 @@ def admin_login():
             admin_login_attempts[username] = record
             return jsonify({"success": False, "error": f"账号或密码错误 你还可再试 {remaining_attempts} 次"}), 401
 
-# 以下路由与原代码完全一致，仅保留 admin_required 装饰器
 @admin_bp.route("/api/admin/users", methods=["GET"])
 @admin_required
 def admin_get_users():
@@ -175,3 +174,21 @@ def admin_get_page_views():
         "total": total,
         "views": [{"path": r[0], "count": r[1], "last_visited": r[2].strftime("%Y-%m-%d %H:%M:%S") if r[2] else None} for r in rows]
     })
+
+@admin_bp.route("/api/admin/announcement", methods=["POST"])
+@admin_required
+def admin_update_announcement():
+    data = request.get_json()
+    title = data.get("title", "").strip()
+    content = data.get("content", "").strip()
+    is_active = data.get("is_active", True)
+    if not title or not content:
+        return jsonify({"success": False, "error": "标题和内容不能为空"}), 400
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE announcement SET title = %s, content = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
+        (title, content, is_active)
+    )
+    conn.commit()
+    return jsonify({"success": True, "message": "公告已修改"})

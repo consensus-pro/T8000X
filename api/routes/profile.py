@@ -192,26 +192,3 @@ def get_announcement():
         "is_active": row["is_active"],
         "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None
     })
-
-@profile_bp.route("/api/admin/announcement", methods=["POST"])
-def admin_update_announcement():
-    admin_username = session.get("admin")
-    if not admin_username:
-        return jsonify({"success": False, "error": "未登录"}), 401
-
-    data = request.get_json()
-    title = data.get("title", "").strip()
-    content = data.get("content", "").strip()
-    is_active = data.get("is_active", True)
-
-    if not title or not content:
-        return jsonify({"success": False, "error": "标题和内容不能为空"}), 400
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute(
-        "UPDATE announcement SET title = %s, content = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
-        (title, content, is_active)
-    )
-    conn.commit()
-    return jsonify({"success": True, "message": "公告已修改"})
