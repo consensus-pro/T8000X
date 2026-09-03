@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T8000X - 用户主页</title>
+<title>Reax - 用户主页</title>
 <style>
 *{margin: 0;padding: 0;box-sizing: border-box;-webkit-tap-highlight-color: rgba(0, 0, 0, 0);font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;}
 html,body{width:100%;min-height:100vh;background:#fff}
@@ -106,7 +106,7 @@ function gc(g){if(g==='男')return '#1677ff';if(g==='女')return '#ff69b4';if(g=
 function ua(q,g){var c=gc(g);A.style.borderColor=c;A.classList.remove('da','qa');A.style.backgroundImage='';A.style.backgroundColor='';A.innerHTML='';if(q){A.classList.add('qa');A.style.backgroundImage='url(https://q1.qlogo.cn/g?b=qq&nk='+q+'&s=640)';A.style.backgroundSize='cover';A.innerHTML='<img src="/svg/avatar.svg" style="display:none;">'}else{A.classList.add('da');A.innerHTML='<img src="/svg/avatar.svg">'}}
 function se(){L.classList.add('hi');N.classList.add('hi');E.classList.remove('hi');S.classList.add('hi')}
 function sc(d){L.classList.add('hi');E.classList.add('hi');S.classList.add('hi');N.classList.remove('hi');U.textContent=d.username;M.textContent=d.email;var p=d.total_points||0;P.textContent=p;R.textContent=(p>0&&d.rank)?'#'+d.rank:'未上榜';var s=d.signature||'未填写';G.textContent=s;G.classList.toggle('gt',s==='未填写');var g=d.gender||'不愿透露';X.textContent=g;X.classList.toggle('gt',g==='不愿透露');T.textContent=d.created_at||'未知';var q=d.qq_number||'未绑定';Q.textContent=q;Q.classList.toggle('gt',q==='未绑定');H.innerHTML='<img src="/svg/user.svg" class="i"> '+d.username+' 的主页';ua(d.qq_number,g);toast.success('账号信息加载成功')}
-function sh(){L.classList.add('hi');N.classList.add('hi');E.classList.add('hi');S.classList.remove('hi');document.title='T8000X - 用户搜索';Ipt.focus()}
+function sh(){L.classList.add('hi');N.classList.add('hi');E.classList.add('hi');S.classList.remove('hi');document.title='Reax - 用户搜索';Ipt.focus()}
 async function lp(){var p=new URLSearchParams(window.location.search),u=p.get('id');if(!u){sh();return}L.classList.remove('hi');N.classList.add('hi');E.classList.add('hi');S.classList.add('hi');var r=await api('/api/user?username='+encodeURIComponent(u),'GET');if(!r.success||r.error==='用户不存在'){se();return}sc(r)}
 Btn.addEventListener('click',function(){var v=Ipt.value.trim();if(!v){toast.error('请输入用户名');return}window.location.href='/user?id='+encodeURIComponent(v)});
 Ipt.addEventListener('keydown',function(e){if(e.key==='Enter')Btn.click()});
