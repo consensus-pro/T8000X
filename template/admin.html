@@ -68,9 +68,7 @@ async function refreshCaptcha() {
             document.getElementById('captchaImg').src = data.data.image;
             captchaToken = data.data.captcha_token;
         }
-        // 静默失败，不提示
     } catch (e) {
-        // 静默失败
     }
 }
 
@@ -88,7 +86,6 @@ async function refreshCaptcha() {
 
     b.addEventListener('click',async function(){
         const un=u.value.trim(), pw=p.value.trim(), ca=c.value.trim();
-        // 前端不再验证账号密码是否为空，由后端统一返回提示
         if(!ca){ toast.error('请输入验证码'); return; }
         if(!captchaToken){ toast.error('验证码未加载，请点击刷新'); return; }
         b.disabled=true;

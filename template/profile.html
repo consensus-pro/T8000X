@@ -200,7 +200,7 @@ async function apiCall(url, method, body) {
     const res = await fetch(url, opts);
     return await res.json();
   } catch (e) {
-    return { success: false, error: '网络连接失败，请重试' };
+    return { success: false, error: '网络连接失败' };
   }
 }
 
